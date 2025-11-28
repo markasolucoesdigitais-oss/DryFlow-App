@@ -225,7 +225,7 @@ const Calculator = ({ isPro, onShowPro, onBack, onSave }: { isPro: boolean, onSh
             type="text" 
             value={clientName} 
             onChange={e => setClientName(e.target.value)}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none"
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none bg-white text-gray-900"
           />
         </div>
         <div>
@@ -234,7 +234,7 @@ const Calculator = ({ isPro, onShowPro, onBack, onSave }: { isPro: boolean, onSh
             type="text" 
             value={environment} 
             onChange={e => setEnvironment(e.target.value)}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none"
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none bg-white text-gray-900"
           />
         </div>
       </div>
@@ -246,7 +246,7 @@ const Calculator = ({ isPro, onShowPro, onBack, onSave }: { isPro: boolean, onSh
             type="number" 
             value={height} 
             onChange={e => setHeight(parseFloat(e.target.value))}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none"
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none bg-white text-gray-900"
           />
         </div>
         <div>
@@ -255,7 +255,7 @@ const Calculator = ({ isPro, onShowPro, onBack, onSave }: { isPro: boolean, onSh
             type="number" 
             value={width} 
             onChange={e => setWidth(parseFloat(e.target.value))}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none"
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none bg-white text-gray-900"
           />
         </div>
       </div>
@@ -305,22 +305,22 @@ const Calculator = ({ isPro, onShowPro, onBack, onSave }: { isPro: boolean, onSh
       </div>
 
       {/* RESULTS BOX */}
-      <div className="bg-gray-900 text-white rounded-lg p-6 shadow-xl mt-8">
-        <div className="flex justify-between items-end border-b border-gray-700 pb-4 mb-4">
+      <div className="bg-white text-gray-900 rounded-lg p-6 shadow-xl mt-8 border border-obra-green">
+        <div className="flex justify-between items-end border-b border-gray-200 pb-4 mb-4">
           <div>
-            <p className="text-gray-400 text-sm uppercase tracking-wider">Resumo da Obra</p>
+            <p className="text-gray-500 text-sm uppercase tracking-wider">Resumo da Obra</p>
             <p className="text-2xl font-bold">{service.toUpperCase()} - {subType.toUpperCase()}</p>
           </div>
           <div className="text-right">
-            <p className="text-gray-400 text-sm">Área Total</p>
+            <p className="text-gray-500 text-sm">Área Total</p>
             <p className="text-3xl font-bold text-obra-green">{calculation.area.toFixed(2)} m²</p>
           </div>
         </div>
         
         {/* Labor Rate Display - Read Only */}
-        <div className="mb-6 bg-gray-800 p-3 rounded border border-gray-700">
-           <p className="text-xs text-gray-400 mb-1 uppercase">Mão de Obra de Referência</p>
-           <p className="text-xl font-mono text-yellow-400">{calculation.laborUnitDisplay}</p>
+        <div className="mb-6 bg-gray-50 p-3 rounded border border-gray-200">
+           <p className="text-xs text-gray-500 mb-1 uppercase">Mão de Obra de Referência</p>
+           <p className="text-xl font-mono text-orange-600 font-bold">{calculation.laborUnitDisplay}</p>
         </div>
 
         <div className="bg-white text-gray-900 rounded p-4">
@@ -331,8 +331,8 @@ const Calculator = ({ isPro, onShowPro, onBack, onSave }: { isPro: boolean, onSh
           <ul className="space-y-2 text-sm">
             {calculation.materials.map((item, idx) => (
               <li key={idx} className="flex justify-between border-b border-gray-100 pb-1 last:border-0">
-                <span className="font-medium">{item.quantity} {item.unit}</span>
                 <span className="text-gray-600">{item.name}</span>
+                <span className="font-medium">{item.quantity} {item.unit}</span>
               </li>
             ))}
           </ul>
@@ -375,320 +375,4 @@ const Calculator = ({ isPro, onShowPro, onBack, onSave }: { isPro: boolean, onSh
         <textarea 
           value={observations}
           onChange={e => setObservations(e.target.value)}
-          className="w-full p-2 border rounded text-sm h-24 focus:ring-2 focus:ring-obra-green outline-none"
-          placeholder="Ex: 50% entrada, validade 15 dias..."
-        ></textarea>
-      </div>
-
-      {/* AI ADVICE */}
-      {aiAdvice && (
-        <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-lg text-indigo-900 text-sm">
-           <p className="font-bold mb-1 flex items-center">💡 Dica do Mestre DryFlow</p>
-           {aiAdvice}
-        </div>
-      )}
-
-      {/* ACTIONS */}
-      <div className="grid grid-cols-2 gap-4 pt-4">
-        <button 
-          onClick={handleAI}
-          className="flex items-center justify-center p-3 border border-indigo-200 bg-indigo-50 text-indigo-700 rounded font-medium hover:bg-indigo-100 transition"
-        >
-           {!isPro && <Icons.Lock />}
-           {aiLoading ? 'Pensando...' : 'Dica do Mestre'}
-        </button>
-        <div className="col-span-1 grid grid-cols-2 gap-2">
-           <button 
-             onClick={handleSave}
-             className="flex items-center justify-center p-3 border border-gray-300 rounded font-medium hover:bg-gray-50 transition"
-           >
-             {!isPro && <Icons.Lock />}
-             Salvar
-           </button>
-           <button 
-             onClick={handlePDF}
-             className="flex items-center justify-center p-3 bg-obra-green text-white rounded font-medium hover:bg-green-600 transition shadow"
-           >
-             {!isPro && <Icons.Lock />}
-             Gerar PDF
-           </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<string>('landing'); // Default to landing
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const loadUser = () => {
-      let currentUser = getCurrentUser();
-      if (!currentUser) {
-        // Create a default guest user if none exists
-        currentUser = {
-          id: `guest_${Date.now()}`,
-          name: 'Visitante',
-          email: '',
-          isPro: false,
-        };
-        saveUser(currentUser);
-      }
-      setUser(currentUser);
-    };
-    loadUser();
-  }, []);
-
-  const onShowPro = () => {
-    if (user && !user.isPro) {
-      if (window.confirm(`Deseja fazer o upgrade para a versão PRO por R$ ${PRICE_PRO}?`)) {
-        const upgradedUser = upgradeUserToPro(user.id);
-        if (upgradedUser) {
-          setUser(upgradedUser);
-        }
-      }
-    }
-  };
-
-  const handleStart = () => {
-    setActiveTab('calculator');
-  };
-
-  if (!user) {
-    return <div className="flex h-screen items-center justify-center">Carregando...</div>;
-  }
-
-  // --- LANDING PAGE ---
-  if (activeTab === 'landing') {
-    return (
-      <div className="min-h-screen bg-white flex flex-col font-sans">
-        <header className="container mx-auto p-6 flex justify-between items-center">
-           <div className="text-2xl font-bold tracking-tight text-gray-900">
-             DRY<span className="text-obra-green">FLOW</span>
-           </div>
-           <nav className="hidden md:flex space-x-8 text-sm font-medium text-gray-600">
-             <button onClick={handleStart} className="hover:text-obra-green">Projetos</button>
-             <button onClick={handleStart} className="hover:text-obra-green">Clientes</button>
-             <button onClick={handleStart} className="hover:text-obra-green">Configurações</button>
-           </nav>
-           <button onClick={handleStart} className="text-sm font-bold text-obra-green hover:underline">
-             Entrar
-           </button>
-        </header>
-
-        <main className="flex-1 container mx-auto px-6 flex flex-col items-center justify-center text-center -mt-20">
-           <div className="inline-block bg-green-100 text-obra-dark px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-6">
-             Ferramenta do Profissional
-           </div>
-           <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
-             Orçamentos de obra<br/>
-             <span className="text-obra-green">sem enrolação.</span>
-           </h1>
-           <p className="text-lg text-gray-500 max-w-2xl mb-10">
-             Calcule material, mão de obra de referência e gere propostas profissionais na hora.
-           </p>
-           <button 
-             onClick={handleStart}
-             className="bg-obra-green text-white text-lg font-bold px-8 py-4 rounded-xl shadow-lg hover:bg-green-600 hover:scale-105 transition transform"
-           >
-             Bora Calcular GRÁTIS
-           </button>
-        </main>
-
-        <footer className="bg-gray-50 border-t py-12">
-           <div className="container mx-auto px-6 grid md:grid-cols-2 gap-8 items-center">
-             <div className="text-left">
-               <h3 className="font-bold text-gray-800 mb-2">Free vs PRO</h3>
-               <p className="text-gray-500 text-sm">A versão gratuita calcula tudo. A versão PRO (R$ {PRICE_PRO}) salva, gera PDF e organiza sua vida.</p>
-             </div>
-             <div className="flex justify-end space-x-4">
-                <div className="text-center">
-                  <span className="block font-bold text-2xl text-gray-800">∞</span>
-                  <span className="text-xs text-gray-500">Cálculos</span>
-                </div>
-                <div className="text-center">
-                  <span className="block font-bold text-2xl text-gray-800">PDF</span>
-                  <span className="text-xs text-gray-500">Profissional</span>
-                </div>
-             </div>
-           </div>
-           <div className="text-center mt-10 text-xs text-gray-400">
-              <p>Privacidade: Seus dados são usados apenas dentro do DryFlow para organizar seus orçamentos e nunca são compartilhados.</p>
-           </div>
-        </footer>
-      </div>
-    );
-  }
-
-  // --- APP LAYOUT (CALCULATOR / PROJECTS / SETTINGS) ---
-  return (
-    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-      {/* APP HEADER */}
-      <header className="bg-white border-b sticky top-0 z-50 no-print">
-        <div className="container mx-auto px-4 h-16 flex justify-between items-center">
-           <div className="flex items-center">
-              <button onClick={() => setActiveTab('landing')} className="mr-4 text-gray-400 hover:text-gray-900 md:hidden">
-                 <Icons.ArrowLeft />
-              </button>
-              <div className="text-xl font-bold tracking-tight text-gray-900 cursor-pointer" onClick={() => setActiveTab('landing')}>
-               DRY<span className="text-obra-green">FLOW</span>
-             </div>
-           </div>
-
-           {/* DESKTOP NAV */}
-           <nav className="hidden md:flex space-x-1 bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setActiveTab('calculator')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'calculator' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Calculadora
-            </button>
-            <button
-              onClick={() => setActiveTab('projects')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'projects' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Projetos
-            </button>
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'settings' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Config
-            </button>
-           </nav>
-
-           <div className="relative">
-              {!user.isPro && (
-                <button onClick={onShowPro} className="hidden md:block bg-alert-orange text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-orange-600 transition">
-                  SEJA PRO
-                </button>
-              )}
-              {/* MOBILE MENU TRIGGER */}
-              <button className="md:hidden ml-2 text-gray-600" onClick={() => setMenuOpen(!menuOpen)}>
-                 <Icons.Menu />
-              </button>
-              
-              {/* MOBILE DROPDOWN */}
-              {menuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
-                  <button onClick={() => { setActiveTab('landing'); setMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Início</button>
-                  <button onClick={() => { setActiveTab('calculator'); setMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Calculadora</button>
-                  <button onClick={() => { setActiveTab('projects'); setMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Projetos</button>
-                  <button onClick={() => { setActiveTab('settings'); setMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Configurações</button>
-                </div>
-              )}
-           </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto p-4 max-w-4xl">
-        {activeTab === 'calculator' && (
-          <div className="bg-white rounded-lg shadow-md p-6 animate-fade-in print:shadow-none print:p-0">
-             <Calculator 
-                isPro={user.isPro} 
-                onShowPro={onShowPro} 
-                onBack={() => setActiveTab('landing')} 
-                onSave={(p) => saveSingleProject(user.id, p)}
-             />
-          </div>
-        )}
-
-        {activeTab === 'projects' && (
-          <div className="bg-white rounded-lg shadow-md p-6 animate-fade-in">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Meus Projetos</h2>
-            {!user.isPro ? (
-              <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                <p className="text-gray-500 mb-4">O histórico de projetos é exclusivo para membros PRO.</p>
-                <button
-                  onClick={onShowPro}
-                  className="bg-obra-green hover:bg-green-600 text-white font-bold py-2 px-6 rounded shadow transition"
-                >
-                  Liberar Histórico
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                 {getProjects(user.id).length === 0 ? (
-                   <p className="text-gray-500 text-center py-8">Nenhum projeto salvo ainda.</p>
-                 ) : (
-                   getProjects(user.id).map(p => (
-                     <div key={p.id} className="border p-4 rounded hover:bg-gray-50 flex justify-between items-center group">
-                       <div>
-                         <p className="font-bold text-gray-800">{p.clientName}</p>
-                         <p className="text-xs text-gray-500">{p.title} • {new Date(p.date).toLocaleDateString()}</p>
-                       </div>
-                       <button onClick={() => deleteProject(user.id, p.id)} className="opacity-0 group-hover:opacity-100 transition">
-                         <Icons.Trash />
-                       </button>
-                     </div>
-                   ))
-                 )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div className="bg-white rounded-lg shadow-md p-6 animate-fade-in">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Minha Conta</h2>
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-2xl font-bold text-gray-500 uppercase">
-                {user.name.charAt(0)}
-              </div>
-              <div>
-                <p className="font-bold text-lg">{user.name}</p>
-                <p className="text-gray-500 text-sm">{user.email || 'Usuário Local'}</p>
-              </div>
-            </div>
-            
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-700">Plano Atual</span>
-                <span className={`font-bold ${user.isPro ? 'text-obra-green' : 'text-gray-500'}`}>
-                  {user.isPro ? 'PRO Vitalício' : 'Gratuito'}
-                </span>
-              </div>
-              {!user.isPro && (
-                <button
-                  onClick={onShowPro}
-                  className="w-full bg-alert-orange text-white font-bold py-3 rounded shadow hover:bg-orange-600 transition mb-6"
-                >
-                  Fazer Upgrade Agora
-                </button>
-              )}
-            </div>
-            <div className="mt-8 pt-8 border-t">
-               <h4 className="font-bold text-gray-800 mb-2">Zona de Perigo</h4>
-               <p className="text-sm text-gray-500 mb-4">Excluir sua conta removerá todos os orçamentos salvos deste dispositivo.</p>
-               <button onClick={() => { if(window.confirm('Tem certeza?')) { import('./services/storage').then(m => m.deleteAccount(user.id)); window.location.reload(); } }} className="text-red-500 text-sm underline hover:text-red-700">Excluir minha conta e dados</button>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* STICKY FOOTER BANNER FOR FREE USERS */}
-      {!user.isPro && activeTab !== 'landing' && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur text-white p-4 z-40 border-t border-gray-700 flex justify-between items-center shadow-2xl animate-slide-up no-print">
-          <div className="flex flex-col">
-            <span className="text-alert-orange font-bold text-sm tracking-wider">VERSÃO GRATUITA</span>
-            <span className="text-gray-400 text-xs">Desbloqueie PDF e Histórico</span>
-          </div>
-          <button 
-            onClick={onShowPro}
-            className="bg-alert-orange hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg text-sm shadow-lg transform active:scale-95 transition"
-          >
-            SEJA PRO R$ {PRICE_PRO}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+          className="w-full p-2 border rounded text-sm h-24 focus:ring-2 focus:ring-obra
