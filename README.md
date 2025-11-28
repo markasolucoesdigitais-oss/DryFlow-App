@@ -1,11 +1,28 @@
-<div align="center">
+# DRYFLOW
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Calculadora de obras sem enrolação para instaladores.
 
-  <h1>Built with AI Studio</h2>
+## Como fazer Deploy na Vercel
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+1. **Push para o GitHub**
+   - Crie um repositório no GitHub.
+   - Suba estes arquivos.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+2. **Vercel**
+   - Crie uma conta na [Vercel](https://vercel.com).
+   - Clique em "Add New Project".
+   - Importe seu repositório do GitHub.
 
-</div>
+3. **Configuração**
+   - Framework Preset: Create React App (ou Vite, se migrar).
+   - **Environment Variables**:
+     - `API_KEY`: Sua chave da API do Google Gemini.
+
+4. **Deploy**
+   - Clique em "Deploy".
+   - Aguarde finalizar.
+
+## Stack
+- React (SPA)
+- Tailwind CSS (via CDN ou PostCSS)
+- Google Gemini SDK (Dicas de Mestre)
