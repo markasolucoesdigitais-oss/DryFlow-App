@@ -1,16 +1,14 @@
-import type { Project, User } from '../types';
+
+import type { Project, User, Client } from '../types';
 import CryptoJS from 'crypto-js';
 
 // --- SECURITY CONSTANTS ---
-// In a real production app, the salt would come from a backend or environment variable.
-// Since this is client-side only, we use a static salt to prevent simple text scraping.
 const ENCRYPTION_PREFIX = 'enc_v1_';
 const STORAGE_PREFIX = 'dryflow_';
 const SECRET_SALT = 'dryflow_secure_salt_2024'; 
 
 /**
  * Generates a storage key isolated by user ID.
- * Example: dryflow_user_12345_projects
  */
 const getUserKey = (userId: string, key: string) => {
   return `${STORAGE_PREFIX}${userId}_${key}`;
@@ -18,7 +16,6 @@ const getUserKey = (userId: string, key: string) => {
 
 /**
  * Encrypts data using AES.
- * Uses the userId + global salt as the key to ensure one user cannot decrypt another's data easily.
  */
 const encryptData = (data: any, userId: string): string => {
   try {
@@ -38,7 +35,7 @@ const encryptData = (data: any, userId: string): string => {
 const decryptData = <T>(ciphertext: string, userId: string): T | null => {
   try {
     if (!ciphertext.startsWith(ENCRYPTION_PREFIX)) {
-        // Fallback for legacy unencrypted data (migration path)
+        // Fallback for legacy unencrypted data
         return JSON.parse(ciphertext);
     }
     const rawCipher = ciphertext.replace(ENCRYPTION_PREFIX, '');
@@ -53,8 +50,6 @@ const decryptData = <T>(ciphertext: string, userId: string): T | null => {
 };
 
 // --- AUTH MANAGEMENT ---
-
-// The "Active Session" is the only thing stored globally (not encrypted per user, but references the ID)
 const SESSION_KEY = 'dryflow_session_id';
 
 export const saveSession = (userId: string) => {
@@ -72,9 +67,6 @@ export const getSessionUserId = (): string | null => {
 // --- USER DATA ---
 
 export const saveUser = (user: User) => {
-  // We store the user profile. 
-  // Note: We don't encrypt the user profile KEY itself so we can find it, 
-  // but we encrypt the CONTENT.
   const key = getUserKey(user.id, 'profile');
   const encrypted = encryptData(user, user.id);
   localStorage.setItem(key, encrypted);
@@ -104,7 +96,7 @@ export const upgradeUserToPro = (userId: string): User | null => {
   return null;
 };
 
-// --- PROJECT DATA (ENCRYPTED & ISOLATED) ---
+// --- PROJECT DATA ---
 
 export const saveProjects = (userId: string, projects: Project[]) => {
   const key = getUserKey(userId, 'projects');
@@ -141,10 +133,50 @@ export const deleteProject = (userId: string, projectId: string) => {
   saveProjects(userId, projects);
 };
 
+// --- CLIENT DATA ---
+
+export const saveClients = (userId: string, clients: Client[]) => {
+  const key = getUserKey(userId, 'clients');
+  const encrypted = encryptData(clients, userId);
+  localStorage.setItem(key, encrypted);
+};
+
+export const getClients = (userId: string): Client[] => {
+  const key = getUserKey(userId, 'clients');
+  const data = localStorage.getItem(key);
+  if (!data) return [];
+  return decryptData<Client[]>(data, userId) || [];
+};
+
+export const saveSingleClient = (userId: string, client: Client): boolean => {
+  const user = getUser(userId);
+  // Free users limited to 1 client
+  const clients = getClients(userId);
+  
+  if (!user?.isPro && clients.length >= 1 && !clients.find(c => c.id === client.id)) {
+      return false; // Limit reached
+  }
+
+  const existingIndex = clients.findIndex(c => c.id === client.id);
+  if (existingIndex >= 0) {
+    clients[existingIndex] = client;
+  } else {
+    clients.push(client);
+  }
+  
+  saveClients(userId, clients);
+  return true;
+};
+
+export const deleteClient = (userId: string, clientId: string) => {
+  const clients = getClients(userId).filter(c => c.id !== clientId);
+  saveClients(userId, clients);
+};
+
+
 // --- ACCOUNT DELETION ---
 
 export const deleteAccount = (userId: string) => {
-  // Remove all keys related to this user
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -152,7 +184,6 @@ export const deleteAccount = (userId: string) => {
       keysToRemove.push(key);
     }
   }
-  
   keysToRemove.forEach(key => localStorage.removeItem(key));
   clearSession();
 };

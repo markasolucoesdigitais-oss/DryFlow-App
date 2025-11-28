@@ -5,8 +5,19 @@ export interface User {
   email: string;
   isPro: boolean;
   companyName?: string;
+  document?: string; // CPF or CNPJ
   phone?: string;
+  city?: string;
   photoUrl?: string; // For Google Auth display
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  city?: string;
+  notes?: string;
 }
 
 export type ServiceType = 'drywall' | 'painting' | 'electrical';
@@ -32,9 +43,12 @@ export interface CalculationResult {
 
 export interface Project {
   id: string;
-  clientName: string;
+  clientId?: string; // Link to client
+  clientName: string; // Fallback or display name
   title: string;
   date: string;
+  status: 'em_cotacao' | 'enviado' | 'aprovado' | 'finalizado';
+  
   serviceType: ServiceType;
   subType: SubType;
   width: number;
@@ -42,7 +56,6 @@ export interface Project {
   
   extraItems: ExtraItem[]; 
   observations?: string; 
-  paymentTerms?: string; 
   
   result: CalculationResult;
   aiAdvice?: string;
