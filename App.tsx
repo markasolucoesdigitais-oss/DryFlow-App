@@ -1,752 +1,1001 @@
-
 import React, { useState, useEffect } from 'react';
-import type { User, Project, Client, CalculationResult, MaterialItem, ExtraItem, ServiceType, SubType } from './types';
-import { getCurrentUser, saveUser, upgradeUserToPro, saveSingleProject, getProjects, deleteProject, deleteAccount, getClients, saveSingleClient, deleteClient } from './services/storage';
 import { generateProjectAdvice } from './services/gemini';
+import { 
+  getCurrentUser, 
+  saveUser, 
+  upgradeUserToPro, 
+  getProjects, 
+  saveSingleProject, 
+  getClients, 
+  saveSingleClient,
+  deleteAccount
+} from './services/storage';
+import { Project, User, ServiceType, SubType, CalculationResult, MaterialItem, Client } from './types';
+
+// --- ICONS ---
+const Icons = {
+  Lock: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+  ),
+  Calculator: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14"></line><line x1="12" y1="14" x2="12" y2="14"></line><line x1="8" y1="14" x2="8" y2="14"></line><line x1="16" y1="18" x2="16" y2="18"></line><line x1="12" y1="18" x2="12" y2="18"></line><line x1="8" y1="18" x2="8" y2="18"></line></svg>
+  ),
+  Check: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+  ),
+  User: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+  ),
+  Sun: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+  ),
+  Moon: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+  ),
+  Briefcase: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+  ),
+  Settings: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+  ),
+  ArrowLeft: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+  ),
+  Home: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+  ),
+  Menu: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  ),
+  Plus: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+  ),
+  Trash: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+  ),
+  Download: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+  ),
+  Magic: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
+  ),
+  Calendar: () => (
+     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+  ),
+  Send: () => (
+     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+  ),
+  QrCode: () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+  )
+};
+
+const LABOR_RATES: Record<string, string> = {
+  'drywall-parede': 'R$ 35,00 / m²',
+  'drywall-teto': 'R$ 45,00 / m²',
+  'painting-lisa': 'R$ 18,00 / m²',
+  'painting-textura': 'R$ 25,00 / m²',
+  'electrical-pontos': 'R$ 60,00 / ponto',
+  'electrical-fiacao': 'R$ 12,00 / m'
+};
 
 const PRICE_PRO = "49,90";
 
-const LABOR_RATES: Record<string, Record<string, string>> = {
-  drywall: {
-    parede: 'R$ 35,00 / m²',
-    teto: 'R$ 45,00 / m²',
-  },
-  painting: {
-    textura: 'R$ 25,00 / m²',
-    lisa: 'R$ 18,00 / m²',
-  },
-  electrical: {
-    pontos: 'R$ 25,00 / ponto',
-    fiacao: 'R$ 15,00 / m',
-  }
+const LoginModal = ({ onClose }: { onClose: (name: string, email: string) => void }) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name && email) onClose(name, email);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-sm shadow-xl border border-gray-100 dark:border-gray-700">
+        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Começar Gratuitamente</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Seu Nome</label>
+            <input required type="text" value={name} onChange={e => setName(e.target.value)} 
+              className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="Ex: João Silva" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Seu E-mail</label>
+            <input required type="email" value={email} onChange={e => setEmail(e.target.value)} 
+              className="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white" placeholder="joao@email.com" />
+          </div>
+          <button type="submit" className="w-full bg-obra-green hover:bg-obra-dark text-white font-bold py-3 rounded-xl transition-colors">
+            Acessar Calculadora
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 };
 
-const Icons = {
-  ArrowLeft: () => (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>),
-  Menu: () => (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>),
-  Check: () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-obra-green"><path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" /></svg>),
-  Lock: () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-1"><path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" /></svg>),
-  Trash: () => (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-500"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>),
-  Edit: () => (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-blue-500"><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>),
-  User: () => (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>),
-  Plus: () => (<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>)
+const ProModal = ({ onClose }: { onClose: () => void }) => (
+  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl relative border border-gray-200 dark:border-gray-700">
+      <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">✕</button>
+      <div className="text-center">
+        <div className="bg-alert-orange/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <span className="text-3xl">👑</span>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Seja Profissional</h2>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">Libere recursos vitais para crescer seu negócio por apenas <span className="font-bold text-obra-green">R$ {PRICE_PRO}</span> (pagamento único).</p>
+        
+        <div className="grid gap-3 text-left mb-6">
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><Icons.Check /><span className="text-sm">Salvar orçamentos ilimitados</span></div>
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><Icons.Check /><span className="text-sm">Gerar PDF profissional</span></div>
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><Icons.Check /><span className="text-sm">Gestão de clientes (CRM)</span></div>
+          <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300"><Icons.Check /><span className="text-sm">Dicas de Mestre (IA)</span></div>
+        </div>
+
+        <button className="w-full bg-alert-orange hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-transform active:scale-95 shadow-lg shadow-orange-500/30">
+          QUERO SER PRO
+        </button>
+        <p className="text-xs text-gray-400 mt-4">Acesso vitalício. Garantia de 7 dias.</p>
+      </div>
+    </div>
+  </div>
+);
+
+const DigitalCardModal = ({ user, onClose }: { user: User, onClose: () => void }) => {
+  // Construct vCard format
+  const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${user.name}
+ORG:${user.companyName || 'Autônomo'}
+TEL:${user.phone || ''}
+EMAIL:${user.email}
+ADR:;;${user.city || ''};;;
+END:VCARD`;
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(vcard)}`;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl relative border border-gray-200 dark:border-gray-700 text-center">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">✕</button>
+        
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Seu Cartão Digital</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Peça para seu cliente escanear para salvar seu contato na hora.</p>
+        
+        <div className="bg-white p-4 rounded-xl shadow-inner border border-gray-100 inline-block mb-6">
+          <img src={qrUrl} alt="QR Code" className="w-48 h-48" />
+        </div>
+
+        <div className="text-left bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
+           <div className="font-bold text-gray-900 dark:text-white">{user.name}</div>
+           <div className="text-sm text-gray-500 dark:text-gray-400">{user.companyName}</div>
+           <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{user.phone}</div>
+           <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+        </div>
+      </div>
+    </div>
+  );
 };
-
-// --- CALCULATOR LOGIC ---
-
-function calculateMaterials(service: ServiceType, subType: SubType, width: number, height: number): { items: MaterialItem[], area: number } {
-  const area = width * height;
-  const items: MaterialItem[] = [];
-  const waste = 1.10; // 10% waste
-
-  if (service === 'drywall') {
-    if (subType === 'parede') {
-      const plateArea = 1.2 * 1.8;
-      items.push({ name: 'Placas ST (1.20x1.80)', quantity: Math.ceil((area * 2 * waste) / plateArea), unit: 'un' });
-      items.push({ name: 'Montantes 48mm', quantity: Math.ceil((width / 0.6) * (height / 3) * waste), unit: 'un' });
-      items.push({ name: 'Guias 48mm', quantity: Math.ceil((width * 2 / 3) * waste), unit: 'un' });
-      items.push({ name: 'Parafuso GN25', quantity: Math.ceil(area * 30 * waste), unit: 'un' });
-      items.push({ name: 'Fita Telada', quantity: Math.ceil((area * 1.5) / 45), unit: 'rl' });
-      items.push({ name: 'Massa Drywall', quantity: Math.ceil(area * 1.5), unit: 'kg' });
-    } else if (subType === 'teto') {
-      const plateArea = 1.2 * 1.8;
-      items.push({ name: 'Placas ST (1.20x1.80)', quantity: Math.ceil((area * waste) / plateArea), unit: 'un' });
-      items.push({ name: 'Perfil F530', quantity: Math.ceil((area * 2.5) / 3 * waste), unit: 'un' });
-      items.push({ name: 'Tabica/Cantoneira', quantity: Math.ceil(((width + height) * 2) / 3 * waste), unit: 'un' });
-      items.push({ name: 'Regulador/Tirante', quantity: Math.ceil(area * 2.5 * waste), unit: 'un' });
-      items.push({ name: 'Parafuso GN25', quantity: Math.ceil(area * 20 * waste), unit: 'un' });
-    }
-  } else if (service === 'painting') {
-    if (subType === 'lisa') {
-      items.push({ name: 'Massa Corrida (Barrica 25kg)', quantity: Math.ceil(area / 40 * waste), unit: 'un' });
-      items.push({ name: 'Tinta Acrílica (Lata 18L)', quantity: Math.ceil(area / 100 * waste), unit: 'un' });
-      items.push({ name: 'Selador Acrílico (Lata 18L)', quantity: Math.ceil(area / 200 * waste), unit: 'un' });
-      items.push({ name: 'Lixa 150/220', quantity: Math.ceil(area / 5), unit: 'fl' });
-    } else if (subType === 'textura') {
-      items.push({ name: 'Textura Rústica (Barrica 25kg)', quantity: Math.ceil(area / 15 * waste), unit: 'un' });
-      items.push({ name: 'Selador Textura', quantity: Math.ceil(area / 150 * waste), unit: 'un' });
-    }
-  } else if (service === 'electrical') {
-    if (subType === 'pontos') {
-       const points = Math.max(1, Math.round(area / 4));
-       items.push({ name: 'Caixinha 4x2', quantity: points, unit: 'un' });
-       items.push({ name: 'Eletroduto Corrugado 3/4', quantity: Math.ceil(points * 3 * waste), unit: 'm' });
-       items.push({ name: 'Cabo 2.5mm', quantity: Math.ceil(points * 15 * waste), unit: 'm' });
-    } else {
-       items.push({ name: 'Cabo 2.5mm', quantity: Math.ceil(area * 3 * waste), unit: 'm' });
-       items.push({ name: 'Disjuntores', quantity: Math.ceil(area / 20), unit: 'un' });
-    }
-  }
-
-  return { items, area };
-}
-
-// --- COMPONENTS ---
 
 const CalculatorApp = ({ 
-  isPro, 
-  onShowPro, 
-  onSave,
-  initialProject,
-  clients
+  user, 
+  onShowPro,
+  onNavigate,
+  existingProject = null
 }: { 
-  isPro: boolean, 
-  onShowPro: () => void, 
-  onSave: (p: Project) => void,
-  initialProject?: Project | null,
-  clients: Client[]
+  user: User | null, 
+  onShowPro: () => void,
+  onNavigate: (tab: string) => void,
+  existingProject?: Project | null
 }) => {
-  const [environment, setEnvironment] = useState(initialProject?.title.split(' - ')[1] || 'Sala');
-  const [height, setHeight] = useState(initialProject?.height || 2.7);
-  const [width, setWidth] = useState(initialProject?.width || 4.0);
-  const [service, setService] = useState<ServiceType>(initialProject?.serviceType || 'drywall');
-  const [subType, setSubType] = useState<SubType>(initialProject?.subType || 'parede');
+  const [clientName, setClientName] = useState(existingProject?.clientName || '');
+  const [title, setTitle] = useState(existingProject?.title || '');
+  const [ambient, setAmbient] = useState('');
+  const [height, setHeight] = useState(existingProject?.height || 2.7);
+  const [width, setWidth] = useState(existingProject?.width || 4.0);
+  const [service, setService] = useState<ServiceType>(existingProject?.serviceType || 'drywall');
+  const [subType, setSubType] = useState<SubType>(existingProject?.subType || 'parede');
+  const [observations, setObservations] = useState(existingProject?.observations || '');
+  const [extraItems, setExtraItems] = useState<any[]>(existingProject?.extraItems || []);
+  const [projectStatus, setProjectStatus] = useState<Project['status']>(existingProject?.status || 'em_cotacao');
   
-  const [clientName, setClientName] = useState(initialProject?.clientName || '');
-  const [clientId, setClientId] = useState(initialProject?.clientId || '');
-  const [extraItems, setExtraItems] = useState<ExtraItem[]>(initialProject?.extraItems || []);
-  const [observations, setObservations] = useState(initialProject?.observations || '');
-  
-  const [newExtraName, setNewExtraName] = useState('');
-  const [newExtraQty, setNewExtraQty] = useState(1);
-  const [calculation, setCalculation] = useState<CalculationResult>({ area: 0, materials: [], laborUnitDisplay: '' });
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiAdvice, setAiAdvice] = useState<string | null>(initialProject?.aiAdvice || null);
+  const [result, setResult] = useState<CalculationResult | null>(null);
+  const [laborPrice, setLaborPrice] = useState('');
 
+  // Auto calculate
   useEffect(() => {
-    if (initialProject) {
-        // Reset state when project changes (if needed)
-    }
-  }, [initialProject]);
+    const area = height * width;
+    let materials: MaterialItem[] = [];
 
-  useEffect(() => {
-    if (isNaN(height) || isNaN(width)) return;
-    const { items, area } = calculateMaterials(service, subType, width, height);
-    
-    let laborText = 'Sob Consulta';
-    const serviceRates = LABOR_RATES[service];
-    if (serviceRates) {
-      const rate = (serviceRates as Record<string,string>)[subType];
-      if (rate) laborText = rate;
+    if (service === 'drywall') {
+      if (subType === 'parede') {
+        materials = [
+          { name: 'Placas ST (1.20x1.80)', quantity: Math.ceil(area / 2.16), unit: 'un' },
+          { name: 'Montantes 48mm', quantity: Math.ceil(width / 0.6), unit: 'un' },
+          { name: 'Guias 48mm', quantity: Math.ceil(width / 3) * 2, unit: 'un' },
+          { name: 'Parafuso GN25', quantity: Math.ceil(area * 20), unit: 'un' },
+          { name: 'Fita Telada', quantity: 1, unit: 'rl' },
+          { name: 'Massa Drywall', quantity: Math.ceil(area * 0.5), unit: 'sc' }
+        ];
+      } else {
+         materials = [
+          { name: 'Placas ST (1.20x1.80)', quantity: Math.ceil(area / 2.16), unit: 'un' },
+          { name: 'Perfis F530', quantity: Math.ceil(area * 1.5), unit: 'un' },
+          { name: 'Tabica', quantity: Math.ceil((width + height) * 2 / 3), unit: 'un' },
+        ];
+      }
+    } else if (service === 'painting') {
+      materials = [
+        { name: 'Tinta Acrílica (18L)', quantity: Math.ceil(area / 100), unit: 'lt' },
+        { name: 'Selador', quantity: Math.ceil(area / 150), unit: 'lt' },
+        { name: 'Lixa 120', quantity: Math.ceil(area / 10), unit: 'un' },
+      ];
+    } else {
+       materials = [
+        { name: 'Caixas 4x2', quantity: Math.ceil(area / 5), unit: 'un' },
+        { name: 'Fio 2.5mm', quantity: Math.ceil(area * 2), unit: 'm' },
+      ];
     }
 
-    setCalculation({ area, materials: items, laborUnitDisplay: laborText });
+    // Add 10% waste
+    materials = materials.map(m => ({
+      ...m,
+      quantity: Math.ceil(m.quantity * 1.10)
+    }));
+
+    const laborKey = `${service}-${subType}`;
+    const rate = LABOR_RATES[laborKey] || 'A combinar';
+    setLaborPrice(rate);
+
+    setResult({
+      area,
+      materials,
+      laborUnitDisplay: rate
+    });
   }, [height, width, service, subType]);
 
-  const handleAddExtra = () => {
-    if (!newExtraName) return;
-    const newItem: ExtraItem = { id: Date.now().toString(), description: newExtraName, quantity: newExtraQty };
-    setExtraItems([...extraItems, newItem]);
-    setNewExtraName('');
-    setNewExtraQty(1);
-  };
-
-  const handleRemoveExtra = (id: string) => {
-    setExtraItems(extraItems.filter(i => i.id !== id));
-  };
-
-  const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const id = e.target.value;
-      setClientId(id);
-      const client = clients.find(c => c.id === id);
-      if (client) setClientName(client.name);
-      else setClientName('');
-  };
-
   const handleSave = () => {
-    if (!isPro) { onShowPro(); return; }
+    if (!user?.isPro) {
+      onShowPro();
+      return;
+    }
+    if (!result) return;
     
     const project: Project = {
-      id: initialProject?.id || Date.now().toString(),
-      clientId: clientId || undefined,
+      id: existingProject?.id || crypto.randomUUID(),
+      clientId: '', 
       clientName: clientName || 'Cliente Novo',
-      title: `${service} - ${environment}`,
+      title: title || `${service} - ${new Date().toLocaleDateString()}`,
       date: new Date().toISOString(),
-      status: initialProject?.status || 'em_cotacao',
+      status: projectStatus,
       serviceType: service,
       subType,
-      width,
       height,
+      width,
       extraItems,
       observations,
-      result: calculation,
-      aiAdvice: aiAdvice || undefined
+      result
     };
-    onSave(project);
-    alert('Orçamento salvo com sucesso!');
-  };
 
-  const handlePDF = () => {
-    if (!isPro) { onShowPro(); return; }
-    window.print();
+    saveSingleProject(user.id, project);
+    alert('Orçamento salvo com sucesso!');
+    onNavigate('myday'); // Return to dashboard
   };
 
   const handleAI = async () => {
-    if (!isPro) { onShowPro(); return; }
-    setAiLoading(true);
-    const materialsList = calculation.materials.map(m => `${m.quantity}${m.unit} ${m.name}`).join(', ');
-    const advice = await generateProjectAdvice(service, subType, calculation.area, materialsList);
-    setAiAdvice(advice);
-    setAiLoading(false);
+    if (!user?.isPro) {
+      onShowPro();
+      return;
+    }
+    const advice = await generateProjectAdvice(service, subType, result?.area || 0, result?.materials.map(m => m.name).join(', ') || '');
+    alert(advice);
   };
 
   return (
-    <div className="space-y-6 relative">
-      <div className="mb-4">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">Nova Cotação</h2>
+    <div className="max-w-4xl mx-auto pb-20">
+      {/* Header with Navigation */}
+      <div className="flex items-center gap-3 mb-6">
+        <button 
+          onClick={() => onNavigate('landing')}
+          className="flex items-center gap-2 text-gray-500 hover:text-obra-green transition-colors dark:text-gray-400 dark:hover:text-obra-green"
+        >
+          <div className="flex items-center gap-1 font-bold text-gray-800 dark:text-white">
+            <Icons.ArrowLeft />
+            <span>DRYFLOW</span>
+          </div>
+        </button>
+        <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          {existingProject ? 'Editar Orçamento' : 'Novo Orçamento'}
+        </h1>
       </div>
 
-      {/* INPUTS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-          <div className="relative">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* INPUTS COLUMN */}
+        <div className="md:col-span-1 space-y-4">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
+             <div>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Cliente / Título</label>
               <input 
-                type="text" 
-                list="clients_list"
                 value={clientName} 
-                onChange={(e) => {
-                    setClientName(e.target.value);
-                    // Try to match id
-                    const match = clients.find(c => c.name === e.target.value);
-                    setClientId(match ? match.id : '');
-                }}
+                onChange={e => setClientName(e.target.value)}
                 placeholder="Nome do Cliente"
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none bg-white text-gray-900"
+                className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-obra-green outline-none"
               />
-              <datalist id="clients_list">
-                  {clients.map(c => <option key={c.id} value={c.name} />)}
-              </datalist>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Altura (m)</label>
+                <input 
+                  type="number" 
+                  value={height} 
+                  onChange={e => setHeight(parseFloat(e.target.value) || 0)}
+                  className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-obra-green outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Comp. (m)</label>
+                <input 
+                  type="number" 
+                  value={width} 
+                  onChange={e => setWidth(parseFloat(e.target.value) || 0)}
+                  className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-obra-green outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Serviço</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['drywall', 'painting', 'electrical'] as const).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setService(s)}
+                    className={`p-2 rounded-lg text-xs font-medium capitalize border transition-all ${
+                      service === s 
+                      ? 'bg-obra-light dark:bg-obra-dark/40 border-obra-green text-obra-dark dark:text-obra-light' 
+                      : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {s === 'painting' ? 'Pintura' : s === 'electrical' ? 'Elétrica' : 'Drywall'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Subtipo</label>
+              <div className="flex flex-wrap gap-2">
+                {service === 'drywall' && (
+                  <>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="sub" checked={subType === 'parede'} onChange={() => setSubType('parede')} className="accent-obra-green"/>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Parede</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="sub" checked={subType === 'teto'} onChange={() => setSubType('teto')} className="accent-obra-green"/>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Teto</span>
+                    </label>
+                  </>
+                )}
+                 {service === 'painting' && (
+                  <>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="sub" checked={subType === 'lisa'} onChange={() => setSubType('lisa')} className="accent-obra-green"/>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Rolo/Lisa</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="sub" checked={subType === 'textura'} onChange={() => setSubType('textura')} className="accent-obra-green"/>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Textura</span>
+                    </label>
+                  </>
+                )}
+                 {service === 'electrical' && (
+                  <>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="sub" checked={subType === 'pontos'} onChange={() => setSubType('pontos')} className="accent-obra-green"/>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Tomadas</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="sub" checked={subType === 'fiacao'} onChange={() => setSubType('fiacao')} className="accent-obra-green"/>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Fiação</span>
+                    </label>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div>
+               <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Status</label>
+               <select 
+                  value={projectStatus} 
+                  onChange={(e) => setProjectStatus(e.target.value as any)}
+                  className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white"
+                >
+                  <option value="em_cotacao">Rascunho (Em cotação)</option>
+                  <option value="enviado">Enviado</option>
+                  <option value="aprovado">Aprovado</option>
+               </select>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Observações / Condições</label>
+             <textarea 
+               value={observations}
+               onChange={e => setObservations(e.target.value)}
+               className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm h-24 text-gray-900 dark:text-white resize-none"
+               placeholder="Ex: 50% entrada, validade 15 dias..."
+             />
           </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Ambiente</label>
-          <input type="text" value={environment} onChange={e => setEnvironment(e.target.value)} className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none bg-white text-gray-900" />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Altura (m)</label>
-          <input type="number" value={height} onChange={e => setHeight(parseFloat(e.target.value))} className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none bg-white text-gray-900" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Comprimento (m)</label>
-          <input type="number" value={width} onChange={e => setWidth(parseFloat(e.target.value))} className="w-full p-2 border rounded focus:ring-2 focus:ring-obra-green outline-none bg-white text-gray-900" />
-        </div>
-      </div>
+        {/* RESULTS COLUMN */}
+        <div className="md:col-span-2 space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-obra-green overflow-hidden">
+             <div className="bg-obra-green p-4 flex justify-between items-center text-white">
+                <span className="font-bold text-lg uppercase tracking-wide">{service} - {subType}</span>
+                <div className="text-right">
+                   <div className="text-xs opacity-80">Área Total</div>
+                   <div className="text-2xl font-bold">{result?.area.toFixed(2)} m²</div>
+                </div>
+             </div>
+             
+             <div className="p-6">
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 mb-6 flex justify-between items-center">
+                   <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Mão de obra de referência</span>
+                   <span className="text-xl font-bold text-alert-orange">{laborPrice}</span>
+                </div>
 
-      {/* SERVICE TYPES */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Serviço</label>
-          <div className="flex space-x-4">
-            {(['drywall', 'painting', 'electrical'] as const).map((s) => (
-              <label key={s} className={`flex items-center p-3 border rounded cursor-pointer transition-colors ${service === s ? 'bg-obra-light border-obra-green text-obra-dark' : 'hover:bg-gray-50 bg-white'}`}>
-                <input type="radio" name="service" checked={service === s} onChange={() => { setService(s); setSubType(s === 'drywall' ? 'parede' : s === 'painting' ? 'lisa' : 'pontos'); }} className="mr-2 text-obra-green focus:ring-obra-green" />
-                <span className="capitalize text-gray-900">{s === 'painting' ? 'Pintura' : s === 'electrical' ? 'Elétrica' : 'Drywall'}</span>
-              </label>
-            ))}
+                <div className="space-y-4">
+                   <h3 className="text-sm font-bold text-obra-green uppercase tracking-wider flex items-center gap-2">
+                     <span className="w-2 h-2 rounded-full bg-obra-green"></span>
+                     Lista de Materiais (+10%)
+                   </h3>
+                   <div className="space-y-2">
+                      {result?.materials.map((m, i) => (
+                        <div key={i} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-2 rounded transition-colors">
+                           <span className="text-gray-700 dark:text-gray-200">{m.name}</span>
+                           <span className="font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded text-sm min-w-[3rem] text-center">
+                             {m.quantity} <span className="text-xs font-normal text-gray-500 dark:text-gray-400">{m.unit}</span>
+                           </span>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+             </div>
           </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Subtipo</label>
-          <div className="flex flex-wrap gap-3">
-             {service === 'drywall' && (<>
-                <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" checked={subType === 'parede'} onChange={() => setSubType('parede')} className="text-obra-green" /><span className="text-gray-900">Parede</span></label>
-                <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" checked={subType === 'teto'} onChange={() => setSubType('teto')} className="text-obra-green" /><span className="text-gray-900">Teto/Forro</span></label>
-            </>)}
-            {service === 'painting' && (<>
-                <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" checked={subType === 'lisa'} onChange={() => setSubType('lisa')} className="text-obra-green" /><span className="text-gray-900">Pintura Lisa</span></label>
-                <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" checked={subType === 'textura'} onChange={() => setSubType('textura')} className="text-obra-green" /><span className="text-gray-900">Textura</span></label>
-            </>)}
-            {service === 'electrical' && (<>
-                <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" checked={subType === 'pontos'} onChange={() => setSubType('pontos')} className="text-obra-green" /><span className="text-gray-900">Pontos</span></label>
-                <label className="flex items-center space-x-2 cursor-pointer"><input type="radio" checked={subType === 'fiacao'} onChange={() => setSubType('fiacao')} className="text-obra-green" /><span className="text-gray-900">Fiação</span></label>
-            </>)}
+
+          <div className="flex flex-col md:flex-row gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+             <button onClick={handleAI} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors">
+                <Icons.Magic />
+                {user?.isPro ? 'Dica do Mestre' : 'Dica (Pro)'}
+             </button>
+             
+             <button onClick={() => user?.isPro ? onShowPro() : onShowPro()} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl border font-semibold transition-colors ${user?.isPro ? 'border-obra-green text-obra-green hover:bg-green-50' : 'border-gray-200 text-gray-400'}`}>
+                {user?.isPro ? <Icons.Download /> : <Icons.Lock />}
+                Gerar PDF
+             </button>
+
+             <button onClick={handleSave} className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 ${user?.isPro ? 'bg-obra-green text-white hover:bg-obra-dark' : 'bg-gray-100 dark:bg-gray-700 text-gray-400'}`}>
+                {user?.isPro ? <Icons.Check /> : <Icons.Lock />}
+                Salvar Orçamento
+             </button>
           </div>
-        </div>
-      </div>
-
-      {/* RESULTS */}
-      <div className="bg-white text-gray-900 rounded-lg p-6 shadow-sm border border-obra-green mt-8">
-        <div className="flex justify-between items-end border-b border-gray-200 pb-4 mb-4">
-          <div>
-            <p className="text-gray-500 text-sm uppercase tracking-wider">Resumo da Obra</p>
-            <p className="text-2xl font-bold">{service.toUpperCase()} - {subType.toUpperCase()}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-gray-500 text-sm">Área Total</p>
-            <p className="text-3xl font-bold text-obra-green">{calculation.area.toFixed(2)} m²</p>
-          </div>
-        </div>
-        <div className="mb-6 bg-gray-50 p-3 rounded border border-gray-200">
-           <p className="text-xs text-gray-500 mb-1 uppercase">Mão de Obra de Referência</p>
-           <p className="text-xl font-mono text-orange-600 font-bold">{calculation.laborUnitDisplay}</p>
-        </div>
-        <div className="bg-white text-gray-900 rounded p-4">
-          <h4 className="font-bold text-obra-dark mb-3 flex items-center"><span className="w-2 h-2 bg-obra-green rounded-full mr-2"></span>Lista de Materiais (+10%)</h4>
-          <ul className="space-y-2 text-sm">
-            {calculation.materials.map((item, idx) => (
-              <li key={idx} className="flex justify-between border-b border-gray-100 pb-1 last:border-0">
-                 <span className="text-gray-600">{item.name}</span>
-                 <span className="font-medium text-gray-900">{item.quantity} {item.unit}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      
-      {/* EXTRAS */}
-      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-        <h4 className="font-bold text-gray-700 mb-2">Adicionais (Ex: Caçamba)</h4>
-        <div className="flex gap-2 mb-2">
-          <input type="text" placeholder="Nome" value={newExtraName} onChange={e => setNewExtraName(e.target.value)} className="flex-1 p-2 border rounded text-sm bg-white text-gray-900" />
-          <input type="number" placeholder="Qtd" value={newExtraQty} onChange={e => setNewExtraQty(parseInt(e.target.value))} className="w-20 p-2 border rounded text-sm bg-white text-gray-900" />
-          <button onClick={handleAddExtra} className="bg-gray-200 hover:bg-gray-300 px-3 rounded text-xl text-gray-700">+</button>
-        </div>
-        <ul className="space-y-1">
-          {extraItems.map(item => (
-             <li key={item.id} className="flex justify-between text-sm text-gray-600 bg-white p-2 rounded shadow-sm border border-gray-100">
-               <span>{item.quantity}x {item.description}</span>
-               <button onClick={() => handleRemoveExtra(item.id)} className="text-red-400 hover:text-red-600">x</button>
-             </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* OBS */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Observações / Condições</label>
-        <textarea value={observations} onChange={e => setObservations(e.target.value)} className="w-full p-2 border rounded text-sm h-24 focus:ring-2 focus:ring-obra-green bg-white text-gray-900 outline-none resize-none" placeholder="Ex: 50% entrada, validade 15 dias..." />
-      </div>
-
-      {/* ACTIONS */}
-      <div className="grid grid-cols-2 gap-4 pt-4 border-t print:hidden">
-        <button onClick={handleAI} disabled={aiLoading} className={`col-span-2 py-3 rounded font-bold text-sm uppercase tracking-wide transition-all border flex items-center justify-center gap-2 ${isPro ? 'border-purple-500 text-purple-600 hover:bg-purple-50' : 'bg-blue-50 border-blue-200 text-blue-600'}`}>
-          {!isPro && <Icons.Lock />}{aiLoading ? 'Pensando...' : 'Dica do Mestre (IA)'}
-        </button>
-        <button onClick={handleSave} className={`flex items-center justify-center py-3 rounded font-bold transition-all border ${isPro ? 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50' : 'bg-white border-gray-300 text-gray-700'}`}>
-          {!isPro && <Icons.Lock />} Salvar
-        </button>
-        <button onClick={handlePDF} className={`flex items-center justify-center py-3 rounded font-bold transition-all ${isPro ? 'bg-obra-green text-white hover:bg-opacity-90' : 'bg-obra-green text-white'}`}>
-          {!isPro && <Icons.Lock />} Gerar PDF
-        </button>
-      </div>
-
-      {aiAdvice && <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded text-purple-900 text-sm italic">" {aiAdvice} "</div>}
-
-      {/* PRINT VIEW */}
-      <div className="hidden print:block absolute top-0 left-0 w-full h-full bg-white z-[9999] p-8">
-        <div className="text-center mb-8 border-b pb-4">
-          <h1 className="text-3xl font-bold text-gray-900">PROPOSTA COMERCIAL</h1>
-          <p className="text-gray-500 text-sm mt-1">{new Date().toLocaleDateString()}</p>
-        </div>
-        <div className="mb-8">
-          <p><strong>Cliente:</strong> {clientName}</p>
-          <p><strong>Projeto:</strong> {service.toUpperCase()} - {environment}</p>
-        </div>
-        <table className="w-full mb-8 text-sm">
-          <thead>
-            <tr className="border-b-2 border-gray-800"><th className="text-left py-2">Descrição</th><th className="text-right py-2">Qtd</th></tr>
-          </thead>
-          <tbody>
-             {calculation.materials.map((m, i) => (<tr key={i} className="border-b border-gray-200"><td className="py-2">{m.name}</td><td className="py-2 text-right">{m.quantity} {m.unit}</td></tr>))}
-             {extraItems.map((e) => (<tr key={e.id} className="border-b border-gray-200"><td className="py-2">{e.description}</td><td className="py-2 text-right">{e.quantity}</td></tr>))}
-          </tbody>
-        </table>
-        {observations && <div className="mt-8 border p-4 rounded bg-gray-50"><h3 className="font-bold text-sm mb-2 uppercase">Condições & Observações</h3><p className="whitespace-pre-wrap text-sm">{observations}</p></div>}
-        <div className="mt-16 grid grid-cols-2 gap-12 pt-8">
-           <div className="border-t border-gray-400 pt-2 text-center text-xs">Assinatura do Profissional</div>
-           <div className="border-t border-gray-400 pt-2 text-center text-xs">De acordo (Cliente)</div>
         </div>
       </div>
     </div>
   );
 };
 
-// --- PROJECTS VIEW ---
-const ProjectsView = ({ onEdit, onNew, isPro, onShowPro }: { onEdit: (p: Project) => void, onNew: () => void, isPro: boolean, onShowPro: () => void }) => {
-    const user = getCurrentUser();
-    const projects = user ? getProjects(user.id) : [];
+const MyDayView = ({ user, onNavigate, onShowPro }: { user: User, onNavigate: (tab: string) => void, onShowPro: () => void }) => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const today = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">Projetos</h2>
-                <button onClick={() => isPro ? onNew() : onShowPro()} className="bg-obra-green text-white px-4 py-2 rounded font-bold hover:bg-obra-dark flex items-center gap-2">
-                    <Icons.Plus /> Novo Projeto
-                </button>
-            </div>
-            
-            {projects.length === 0 ? (
-                 <div className="text-center py-12 text-gray-500 bg-white rounded-lg border border-dashed border-gray-300">
-                    Você ainda não tem orçamentos salvos.
-                 </div>
-            ) : (
-                <div className="grid gap-4">
-                    {projects.map(p => (
-                        <div key={p.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                            <div>
-                                <h3 className="font-bold text-lg text-gray-900">{p.title}</h3>
-                                <p className="text-sm text-gray-500">{p.clientName} • {new Date(p.date).toLocaleDateString()}</p>
-                                <span className={`text-xs px-2 py-1 rounded-full mt-2 inline-block ${p.status === 'aprovado' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                    {p.status.replace('_', ' ').toUpperCase()}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2 w-full md:w-auto">
-                                <div className="text-right mr-4 hidden md:block">
-                                     <p className="text-xs text-gray-400">Total Material</p>
-                                     <p className="font-bold text-gray-700">{p.result.materials.length} itens</p>
-                                </div>
-                                <button onClick={() => { if(isPro) onEdit(p); else onShowPro(); }} className="flex-1 md:flex-none border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-50 font-medium text-sm">
-                                    Ver Detalhes
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
+  useEffect(() => {
+    setProjects(getProjects(user.id));
+  }, [user]);
 
-// --- CLIENTS VIEW ---
-const ClientsView = ({ isPro, onShowPro }: { isPro: boolean, onShowPro: () => void }) => {
-    const user = getCurrentUser();
-    const [clients, setClients] = useState<Client[]>([]);
-    const [showForm, setShowForm] = useState(false);
-    const [newClient, setNewClient] = useState<Partial<Client>>({});
+  const quoting = projects.filter(p => p.status === 'em_cotacao').length;
+  const sent = projects.filter(p => p.status === 'enviado').length;
+  const approved = projects.filter(p => p.status === 'aprovado').length;
 
-    useEffect(() => {
-        if (user) setClients(getClients(user.id));
-    }, [user, showForm]);
-
-    const handleSaveClient = () => {
-        if (!newClient.name) return;
-        if (user) {
-            const success = saveSingleClient(user.id, { 
-                id: Date.now().toString(),
-                name: newClient.name,
-                phone: newClient.phone || '',
-                email: newClient.email || '',
-                city: newClient.city || '',
-                notes: newClient.notes || ''
-            });
-            
-            if (success) {
-                setShowForm(false);
-                setNewClient({});
-            } else {
-                onShowPro();
-            }
-        }
-    };
-
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">Clientes</h2>
-                <button onClick={() => {
-                     if(!isPro && clients.length >= 1) onShowPro();
-                     else setShowForm(!showForm);
-                }} className="bg-obra-green text-white px-4 py-2 rounded font-bold hover:bg-obra-dark flex items-center gap-2">
-                    {showForm ? 'Cancelar' : <><Icons.Plus /> Novo Cliente</>}
-                </button>
-            </div>
-
-            {showForm && (
-                <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm animate-fade-in">
-                    <h3 className="font-bold mb-4 text-gray-800">Novo Cadastro</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <input className="border p-2 rounded bg-white text-gray-900" placeholder="Nome Completo *" value={newClient.name || ''} onChange={e => setNewClient({...newClient, name: e.target.value})} />
-                        <input className="border p-2 rounded bg-white text-gray-900" placeholder="Telefone / Whatsapp" value={newClient.phone || ''} onChange={e => setNewClient({...newClient, phone: e.target.value})} />
-                        <input className="border p-2 rounded bg-white text-gray-900" placeholder="Email" value={newClient.email || ''} onChange={e => setNewClient({...newClient, email: e.target.value})} />
-                        <input className="border p-2 rounded bg-white text-gray-900" placeholder="Cidade" value={newClient.city || ''} onChange={e => setNewClient({...newClient, city: e.target.value})} />
-                    </div>
-                    <textarea className="w-full border p-2 rounded mb-4 bg-white text-gray-900" placeholder="Observações" value={newClient.notes || ''} onChange={e => setNewClient({...newClient, notes: e.target.value})} />
-                    <button onClick={handleSaveClient} className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">Salvar Cliente</button>
-                </div>
-            )}
-
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                {clients.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">Nenhum cliente cadastrado.</div>
-                ) : (
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 text-gray-500 font-medium">
-                            <tr>
-                                <th className="p-4">Nome</th>
-                                <th className="p-4">Contato</th>
-                                <th className="p-4 hidden sm:table-cell">Cidade</th>
-                                <th className="p-4 text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {clients.map(c => (
-                                <tr key={c.id} className="hover:bg-gray-50">
-                                    <td className="p-4 font-bold text-gray-900">{c.name}</td>
-                                    <td className="p-4 text-gray-600">{c.phone}</td>
-                                    <td className="p-4 text-gray-600 hidden sm:table-cell">{c.city}</td>
-                                    <td className="p-4 text-right">
-                                        <button onClick={() => { if(user) { deleteClient(user.id, c.id); setClients(getClients(user.id)); }}} className="text-red-500 hover:text-red-700">Excluir</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-        </div>
-    );
-};
-
-// --- CONFIG VIEW ---
-const ConfigView = () => {
-    const user = getCurrentUser();
-    const [formData, setFormData] = useState<Partial<User>>({ ...user });
-    
-    const handleUpdate = () => {
-        if(user && formData) {
-            saveUser({ ...user, ...formData } as User);
-            alert("Dados atualizados!");
-        }
-    };
-
-    const handleDelete = () => {
-        if(confirm("Tem certeza? Isso apagará TODOS os seus dados permanentemente.")) {
-            if(user) deleteAccount(user.id);
-            window.location.reload();
-        }
-    };
-
-    return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Configurações</h2>
-            
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="font-bold text-lg mb-4 text-gray-900">Dados do Profissional</h3>
-                <p className="text-sm text-gray-500 mb-4">Esses dados aparecerão no cabeçalho dos seus orçamentos PDF.</p>
-                <div className="grid grid-cols-1 gap-4 mb-4">
-                    <input className="border p-2 rounded bg-white text-gray-900" placeholder="Seu Nome / Apelido" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
-                    <input className="border p-2 rounded bg-white text-gray-900" placeholder="Nome da Empresa (Opcional)" value={formData.companyName || ''} onChange={e => setFormData({...formData, companyName: e.target.value})} />
-                    <input className="border p-2 rounded bg-white text-gray-900" placeholder="CNPJ / CPF" value={formData.document || ''} onChange={e => setFormData({...formData, document: e.target.value})} />
-                    <input className="border p-2 rounded bg-white text-gray-900" placeholder="Telefone de Contato" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                    <input className="border p-2 rounded bg-white text-gray-900" placeholder="Cidade / UF" value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value})} />
-                </div>
-                <button onClick={handleUpdate} className="bg-obra-green text-white px-6 py-2 rounded font-bold hover:bg-obra-dark">Salvar Alterações</button>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="font-bold text-lg mb-2 text-gray-900">Aparência</h3>
-                <div className="flex items-center justify-between">
-                    <span className="text-gray-700">Tema Escuro</span>
-                    <button onClick={() => document.documentElement.classList.toggle('dark')} className="bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300 text-gray-800">Alternar Tema</button>
-                </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="font-bold text-lg mb-2 text-gray-900">Privacidade</h3>
-                <p className="text-sm text-gray-600 mb-4">Seus dados e orçamentos ficam restritos à sua conta e não são compartilhados com outros usuários.</p>
-                <button onClick={handleDelete} className="text-red-500 border border-red-200 bg-red-50 px-4 py-2 rounded hover:bg-red-100 transition text-sm font-medium">Excluir Minha Conta e Dados</button>
-            </div>
-        </div>
-    );
-};
-
-// --- MODALS ---
-const ProModal = ({ onClose }: { onClose: () => void }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-    <div className="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl relative">
-      <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">✕</button>
-      <div className="w-16 h-16 bg-alert-orange/20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🚀</div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">Seja Profissional</h3>
-      <p className="text-gray-600 mb-6 text-sm">Libere orçamentos ilimitados, PDF personalizado, histórico e Inteligência Artificial.</p>
-      <ul className="text-left text-sm space-y-3 mb-6 bg-gray-50 p-4 rounded-lg">
-         <li className="flex gap-2"><Icons.Check /> Salvar e Editar Projetos</li>
-         <li className="flex gap-2"><Icons.Check /> Gerar PDF Profissional</li>
-         <li className="flex gap-2"><Icons.Check /> Consultor IA 24/7</li>
-         <li className="flex gap-2"><Icons.Check /> Gestão de Clientes</li>
-      </ul>
-      <button onClick={() => { if (upgradeUserToPro(getCurrentUser()?.id || '')) { alert('Upgrade realizado com sucesso! (Simulado)'); window.location.reload(); }}} className="w-full bg-alert-orange hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-transform active:scale-95 shadow-lg shadow-orange-200">DESBLOQUEAR TUDO R$ {PRICE_PRO}</button>
-      <p className="text-xs text-gray-400 mt-3">Pagamento único. Acesso vitalício.</p>
-    </div>
-  </div>
-);
-
-const LoginModal = ({ onSubmit }: { onSubmit: (name: string, email: string) => void }) => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-       <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center">
-          <div className="mb-4"><span className="text-2xl font-bold tracking-tighter">DRY<span className="text-obra-green">FLOW</span></span></div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Bem-vindo!</h3>
-          <p className="text-gray-600 mb-6 text-sm">Insira seus dados para começar a calcular.</p>
-          <input className="w-full p-3 border rounded mb-3 bg-white text-gray-900 focus:ring-2 focus:ring-obra-green outline-none" placeholder="Seu Nome" value={name} onChange={e => setName(e.target.value)} />
-          <input className="w-full p-3 border rounded mb-6 bg-white text-gray-900 focus:ring-2 focus:ring-obra-green outline-none" placeholder="Seu Melhor E-mail" value={email} onChange={e => setEmail(e.target.value)} />
-          <button onClick={() => { if(name && email) onSubmit(name, email); }} className="w-full bg-obra-green text-white font-bold py-3 rounded-xl hover:bg-obra-dark transition active:scale-95" disabled={!name || !email}>Bora Calcular 🚀</button>
+    <div className="max-w-6xl mx-auto py-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+        <div>
+           <h1 className="text-4xl font-light text-gray-900 dark:text-white mb-2 tracking-tight">Meu Dia</h1>
+           <div className="flex items-center gap-3 text-gray-500 dark:text-gray-400">
+              <span className="capitalize">{today}</span>
+              <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+              <span>Olá, {user.name.split(' ')[0]}</span>
+           </div>
+        </div>
+      </div>
+
+      {/* STATS GRID - 3 COLUMNS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-gray-700 hover:shadow-md hover:-translate-y-1 transition-all group">
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider group-hover:text-blue-500 transition-colors">Em Cotação</span>
+              <div className="text-gray-300 dark:text-gray-600 group-hover:text-blue-500 transition-colors"><Icons.Briefcase /></div>
+            </div>
+            <div className="text-4xl font-bold text-gray-900 dark:text-white">{quoting}</div>
+         </div>
+         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-gray-700 hover:shadow-md hover:-translate-y-1 transition-all group">
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider group-hover:text-amber-500 transition-colors">Enviadas</span>
+              <div className="text-gray-300 dark:text-gray-600 group-hover:text-amber-500 transition-colors"><Icons.Send /></div>
+            </div>
+            <div className="text-4xl font-bold text-gray-900 dark:text-white">{sent}</div>
+         </div>
+         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-gray-700 hover:shadow-md hover:-translate-y-1 transition-all group">
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider group-hover:text-green-500 transition-colors">Aprovadas</span>
+              <div className="text-gray-300 dark:text-gray-600 group-hover:text-green-500 transition-colors"><Icons.Check /></div>
+            </div>
+            <div className="text-4xl font-bold text-gray-900 dark:text-white">{approved}</div>
+         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         <div className="lg:col-span-2 space-y-6">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white">Acesso Rápido</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+               <button onClick={() => onNavigate('calculator')} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 hover:border-obra-green group transition-all text-left">
+                  <div className="w-12 h-12 rounded-full bg-green-50 dark:bg-green-900/30 flex items-center justify-center text-obra-green group-hover:bg-obra-green group-hover:text-white transition-colors">
+                    <Icons.Plus />
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900 dark:text-white">Nova Cotação</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Calculadora completa</div>
+                  </div>
+               </button>
+               <button onClick={() => onNavigate('clients')} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4 hover:border-blue-500 group transition-all text-left">
+                  <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                    <Icons.User />
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900 dark:text-white">Novo Cliente</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Cadastrar contato</div>
+                  </div>
+               </button>
+            </div>
+         </div>
+         
+         <div>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Tarefas</h2>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center py-10">
+               <div className="text-4xl mb-3">☕</div>
+               <p className="text-gray-500 dark:text-gray-400">Tudo limpo por hoje.</p>
+               <button className="text-sm text-obra-green font-bold mt-2 hover:underline">Adicionar tarefa</button>
+            </div>
+         </div>
+      </div>
+    </div>
+  );
+};
+
+const ProjectsView = ({ user, onEdit }: { user: User, onEdit: (p: Project) => void }) => {
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    // Only show Approved projects here
+    setProjects(getProjects(user.id).filter(p => p.status === 'aprovado'));
+  }, [user]);
+
+  if (projects.length === 0) {
+     return (
+        <div className="text-center py-20">
+           <div className="text-6xl mb-4">📂</div>
+           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Nenhum projeto aprovado</h2>
+           <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mt-2">Os orçamentos que você marcar como "Aprovado" aparecerão aqui.</p>
+        </div>
+     )
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto py-8">
+       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Projetos Aprovados</h1>
+       <div className="grid gap-4">
+          {projects.map(p => (
+             <div key={p.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-l-4 border-l-obra-green border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <div>
+                   <h3 className="font-bold text-gray-900 dark:text-white text-lg">{p.title}</h3>
+                   <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      <span>{p.clientName}</span>
+                      <span>•</span>
+                      <span>{new Date(p.date).toLocaleDateString()}</span>
+                   </div>
+                </div>
+                <button onClick={() => onEdit(p)} className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                   Abrir
+                </button>
+             </div>
+          ))}
        </div>
     </div>
   );
-}
+};
 
-// --- LANDING PAGE ---
-const LandingPage = ({ onStart }: { onStart: () => void }) => (
-  <div className="min-h-screen bg-white text-gray-900 font-sans">
-    <nav className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
-       <div className="text-2xl font-bold tracking-tighter">DRY<span className="text-obra-green">FLOW</span></div>
-       <button onClick={onStart} className="text-sm font-semibold leading-6 text-gray-900 hover:text-obra-green">Entrar <span aria-hidden="true">&rarr;</span></button>
-    </nav>
-    <main className="max-w-4xl mx-auto px-6 pt-12 pb-20 text-center">
-       <div className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-obra-green ring-1 ring-inset ring-obra-green/20 bg-obra-light mb-8">Ferramenta do Profissional</div>
-       <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-gray-900 mb-6">Orçamentos de obra <span className="text-obra-green">sem enrolação.</span></h1>
-       <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">Calcule material, mão de obra de referência e gere propostas profissionais na hora.</p>
-       <button onClick={onStart} className="bg-obra-green hover:bg-obra-dark text-white text-lg font-bold py-4 px-10 rounded-full transition-all shadow-xl shadow-green-200 hover:shadow-2xl active:scale-95">Bora Calcular GRÁTIS</button>
-    </main>
-  </div>
-);
-
-// --- MAIN APP ---
-export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'landing' | 'calculator' | 'projects' | 'clients' | 'config'>('landing');
-  const [showProModal, setShowProModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  
-  // State to hold a project being edited or re-opened
-  const [currentProject, setCurrentProject] = useState<Project | null>(null);
+const ClientsView = ({ user, onShowPro }: { user: User, onShowPro: () => void }) => {
   const [clients, setClients] = useState<Client[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [newClient, setNewClient] = useState({ name: '', phone: '', city: '' });
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-       setUser(currentUser);
-       setClients(getClients(currentUser.id));
+    setClients(getClients(user.id));
+  }, [user]);
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClient.name) return;
+    
+    const success = saveSingleClient(user.id, {
+      id: crypto.randomUUID(),
+      ...newClient
+    });
+
+    if (!success) {
+      onShowPro();
+      return;
     }
-  }, [activeTab]); // Refresh clients/user data on tab switch
+    
+    setClients(getClients(user.id));
+    setShowForm(false);
+    setNewClient({ name: '', phone: '', city: '' });
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto py-8">
+       <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meus Clientes</h1>
+          <button onClick={() => setShowForm(true)} className="bg-obra-green text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-obra-dark transition-colors flex items-center gap-2">
+             <Icons.Plus /> Novo Cliente
+          </button>
+       </div>
+
+       {showForm && (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 mb-6 animate-fade-in">
+             <h3 className="font-bold text-gray-900 dark:text-white mb-4">Cadastrar Cliente</h3>
+             <form onSubmit={handleSave} className="grid gap-4">
+                <input required placeholder="Nome Completo" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} className="p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
+                <div className="grid grid-cols-2 gap-4">
+                   <input placeholder="WhatsApp" value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})} className="p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
+                   <input placeholder="Cidade/Bairro" value={newClient.city} onChange={e => setNewClient({...newClient, city: e.target.value})} className="p-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"/>
+                </div>
+                <div className="flex justify-end gap-2 mt-2">
+                   <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">Cancelar</button>
+                   <button type="submit" className="bg-obra-green text-white px-6 py-2 rounded-lg font-bold">Salvar</button>
+                </div>
+             </form>
+          </div>
+       )}
+
+       {clients.length === 0 ? (
+          <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+             <p className="text-gray-400">Nenhum cliente cadastrado.</p>
+          </div>
+       ) : (
+         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <table className="w-full text-left">
+               <thead className="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-xs uppercase">
+                  <tr>
+                     <th className="p-4">Nome</th>
+                     <th className="p-4">Contato</th>
+                     <th className="p-4">Local</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {clients.map(c => (
+                     <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="p-4 font-medium text-gray-900 dark:text-white">{c.name}</td>
+                        <td className="p-4 text-gray-600 dark:text-gray-300">{c.phone || '-'}</td>
+                        <td className="p-4 text-gray-600 dark:text-gray-300">{c.city || '-'}</td>
+                     </tr>
+                  ))}
+               </tbody>
+            </table>
+         </div>
+       )}
+    </div>
+  );
+};
+
+const ConfigView = ({ user, onUpdateUser, onLogout }: { user: User, onUpdateUser: (u: User) => void, onLogout: () => void }) => {
+  const [editedUser, setEditedUser] = useState<User>(user);
+  const [showQR, setShowQR] = useState(false);
+
+  const handleSaveProfile = () => {
+    saveUser(editedUser);
+    onUpdateUser(editedUser);
+    alert("Perfil atualizado com sucesso!");
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto py-8">
+       {showQR && <DigitalCardModal user={user} onClose={() => setShowQR(false)} />}
+       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Configurações</h1>
+       
+       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+             <div>
+               <h3 className="font-bold text-gray-900 dark:text-white mb-1">Perfil do Profissional</h3>
+               <p className="text-sm text-gray-500 dark:text-gray-400">Seus dados para orçamentos e cartão digital.</p>
+             </div>
+             <button onClick={handleSaveProfile} className="text-sm font-bold text-obra-green hover:underline">
+               Salvar Alterações
+             </button>
+          </div>
+          <div className="p-6 space-y-4">
+             <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome de Exibição</label>
+                <input 
+                  value={editedUser.name} 
+                  onChange={e => setEditedUser({...editedUser, name: e.target.value})}
+                  className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
+                />
+             </div>
+             <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Empresa (Opcional)</label>
+                <input 
+                  value={editedUser.companyName || ''} 
+                  onChange={e => setEditedUser({...editedUser, companyName: e.target.value})}
+                  placeholder="Ex: Silva Reformas"
+                  className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
+                />
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone / WhatsApp</label>
+                  <input 
+                    value={editedUser.phone || ''} 
+                    onChange={e => setEditedUser({...editedUser, phone: e.target.value})}
+                    placeholder="(00) 00000-0000"
+                    className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cidade</label>
+                  <input 
+                    value={editedUser.city || ''} 
+                    onChange={e => setEditedUser({...editedUser, city: e.target.value})}
+                    placeholder="Sua Cidade"
+                    className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white"
+                  />
+                </div>
+             </div>
+             <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail (Login)</label>
+                <input readOnly value={editedUser.email} className="w-full p-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 cursor-not-allowed"/>
+             </div>
+          </div>
+       </div>
+  
+       {/* DIGITAL CARD SECTION */}
+       <div className="bg-gradient-to-r from-gray-800 to-gray-900 dark:from-gray-700 dark:to-gray-800 rounded-xl shadow-lg overflow-hidden mb-6 text-white relative">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+             <Icons.QrCode />
+          </div>
+          <div className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+             <div>
+                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                  <span className="bg-white/20 p-1 rounded"><Icons.QrCode /></span> 
+                  Cartão de Visita Digital
+                </h3>
+                <p className="text-gray-300 text-sm max-w-sm">Gere um QR Code automático com seus dados de contato. Seu cliente escaneia e salva na agenda na hora.</p>
+             </div>
+             <button onClick={() => setShowQR(true)} className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-gray-100 transition-colors shadow-lg whitespace-nowrap">
+                Gerar Cartão Digital
+             </button>
+          </div>
+       </div>
+
+       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden p-6">
+          <h3 className="font-bold text-red-600 mb-2">Zona de Perigo</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Excluir todos os seus dados e orçamentos deste dispositivo.</p>
+          <button onClick={() => { if(confirm('Tem certeza? Isso apaga tudo.')) onLogout(); }} className="text-red-600 text-sm font-bold hover:underline flex items-center gap-2">
+             <Icons.Trash /> Excluir minha conta e dados
+          </button>
+       </div>
+    </div>
+  );
+};
+
+// --- MAIN APP COMPONENT ---
+
+export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState('landing'); // landing, myday, calculator, clients, projects, config
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showProModal, setShowProModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Check Session & Theme
+  useEffect(() => {
+    const sessionUser = getCurrentUser();
+    if (sessionUser) {
+      setUser(sessionUser);
+      setActiveTab('myday');
+    }
+
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setTheme('dark');
+    }
+  }, []);
+
+  // Apply Theme
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   const handleStart = () => {
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setActiveTab('calculator');
+    const sessionUser = getCurrentUser();
+    if (sessionUser) {
+      setUser(sessionUser);
+      setActiveTab('myday');
     } else {
       setShowLoginModal(true);
     }
   };
 
-  const handleLoginSubmit = (name: string, email: string) => {
-    const newUser: User = { id: Date.now().toString(), name, email, isPro: false };
+  const handleLogin = (name: string, email: string) => {
+    const newUser: User = { id: crypto.randomUUID(), name, email, isPro: false };
     saveUser(newUser);
     setUser(newUser);
     setShowLoginModal(false);
-    setActiveTab('calculator');
+    setActiveTab('myday');
   };
 
-  // When a user clicks "New Project" (or "Calculadora" from menu), reset current project
-  const handleNewProject = () => {
-      setCurrentProject(null);
-      setActiveTab('calculator');
+  const handleLogout = () => {
+    if (user) deleteAccount(user.id);
+    setUser(null);
+    setActiveTab('landing');
   };
 
-  const handleEditProject = (p: Project) => {
-      setCurrentProject(p);
-      setActiveTab('calculator');
+  const handleUpgrade = () => {
+    if (user) {
+      const upgraded = upgradeUserToPro(user.id);
+      if (upgraded) {
+        setUser(upgraded);
+        setShowProModal(false);
+        alert('Bem-vindo ao PRO! Todos os recursos liberados.');
+      }
+    }
   };
 
-  // Navbar Component inside Main App
-  const Navbar = () => (
-      <nav className="bg-obra-green shadow-lg">
-          <div className="max-w-4xl mx-auto px-4">
-              <div className="flex justify-between items-center h-16">
-                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('landing')}>
-                       <span className="font-bold text-white text-xl tracking-tight">DRYFLOW</span>
-                  </div>
-                  <div className="hidden md:flex space-x-4">
-                      <button onClick={handleNewProject} className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === 'calculator' ? 'bg-obra-dark text-white' : 'text-white hover:bg-obra-dark/50'}`}>Calculadora</button>
-                      <button onClick={() => setActiveTab('projects')} className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === 'projects' ? 'bg-obra-dark text-white' : 'text-white hover:bg-obra-dark/50'}`}>Projetos</button>
-                      <button onClick={() => setActiveTab('clients')} className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === 'clients' ? 'bg-obra-dark text-white' : 'text-white hover:bg-obra-dark/50'}`}>Clientes</button>
-                      <button onClick={() => setActiveTab('config')} className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === 'config' ? 'bg-obra-dark text-white' : 'text-white hover:bg-obra-dark/50'}`}>Config</button>
-                  </div>
-                  <div className="flex items-center">
-                       {user?.isPro && <span className="bg-white text-obra-green text-xs font-bold px-2 py-1 rounded-full mr-2">PRO</span>}
-                       <div className="md:hidden">
-                           {/* Mobile Menu Placeholder - For simplicity, just using icons/logic or relying on bottom/scroll. 
-                               For this spec, distinct mobile menu isn't explicitly detailed, so we assume desktop nav wraps or basic access. 
-                               We'll add a simple row below for mobile if needed, but horizontal scroll usually works. */}
-                       </div>
-                       <button onClick={() => { /* Logout logic could go here */ setActiveTab('landing'); }} className="text-white hover:text-gray-200 ml-2"><Icons.User /></button>
-                  </div>
-              </div>
-              {/* Mobile Menu Row */}
-              <div className="flex md:hidden justify-between pb-2 overflow-x-auto text-white text-sm">
-                  <button onClick={handleNewProject} className="px-2">Calculadora</button>
-                  <button onClick={() => setActiveTab('projects')} className="px-2">Projetos</button>
-                  <button onClick={() => setActiveTab('clients')} className="px-2">Clientes</button>
-                  <button onClick={() => setActiveTab('config')} className="px-2">Config</button>
-              </div>
-          </div>
-      </nav>
-  );
+  // --- RENDER ---
 
   if (activeTab === 'landing') {
     return (
-        <div className="bg-white min-h-screen">
-            <LandingPage onStart={handleStart} />
-            <footer className="mt-12 py-6 text-center text-xs text-gray-400 border-t border-gray-100"><p>© 2024 DryFlow App.</p></footer>
-            {showLoginModal && <LoginModal onSubmit={handleLoginSubmit} />}
+      <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center justify-center p-4">
+        {showLoginModal && <LoginModal onClose={handleLogin} />}
+        
+        <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center">
+          <div className="flex items-center gap-2 font-bold text-xl text-obra-green tracking-tighter">
+            <div className="w-8 h-8 bg-obra-green text-white flex items-center justify-center rounded-lg">DF</div>
+            DRYFLOW
+          </div>
+          <button onClick={handleStart} className="font-semibold text-gray-700 dark:text-gray-200 hover:text-obra-green flex items-center gap-1">
+            Entrar <span>→</span>
+          </button>
+        </header>
+
+        <div className="max-w-2xl text-center animate-fade-in mt-10">
+          <div className="inline-block px-4 py-1.5 rounded-full bg-green-50 dark:bg-green-900/30 text-obra-green text-sm font-bold mb-6 border border-green-100 dark:border-green-800">
+            Ferramenta do Profissional
+          </div>
+          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 leading-tight">
+            Orçamentos de obra <span className="text-obra-green">sem enrolação.</span>
+          </h1>
+          <p className="text-xl text-gray-500 dark:text-gray-400 mb-10 max-w-lg mx-auto leading-relaxed">
+            Calcule material, mão de obra de referência e gere propostas profissionais na hora.
+          </p>
+          <button 
+            onClick={handleStart}
+            className="bg-obra-green hover:bg-obra-dark text-white text-lg font-bold py-4 px-10 rounded-2xl shadow-xl shadow-green-500/30 transition-all hover:scale-105 active:scale-95"
+          >
+            Bora Calcular GRÁTIS
+          </button>
         </div>
+        
+        <div className="absolute bottom-6 text-sm text-gray-400 dark:text-gray-600">
+           © 2024 DryFlow. Simples e Seguro.
+        </div>
+      </div>
     );
   }
 
+  // APP LAYOUT
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20">
-      <Navbar />
-      
-      <div className="max-w-4xl mx-auto pt-6 px-4">
-        {activeTab === 'calculator' && (
-           <CalculatorApp 
-             isPro={!!user?.isPro} 
-             onShowPro={() => setShowProModal(true)} 
-             onSave={(p) => saveSingleProject(user!.id, p)}
-             initialProject={currentProject}
-             clients={clients}
-           />
-        )}
-        
-        {activeTab === 'projects' && (
-            <ProjectsView 
-                onEdit={handleEditProject} 
-                onNew={handleNewProject}
-                isPro={!!user?.isPro}
-                onShowPro={() => setShowProModal(true)}
-            />
-        )}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 font-sans">
+      {showProModal && <ProModal onClose={() => setShowProModal(false)} />}
+      {/* NAVBAR */}
+      <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold text-xl text-obra-green tracking-tighter cursor-pointer" onClick={() => setActiveTab('myday')}>
+            <div className="w-8 h-8 bg-obra-green text-white flex items-center justify-center rounded-lg">DF</div>
+            <span className="hidden md:inline">DRYFLOW</span>
+          </div>
 
-        {activeTab === 'clients' && (
-            <ClientsView isPro={!!user?.isPro} onShowPro={() => setShowProModal(true)} />
-        )}
+          <div className="flex items-center gap-1 md:gap-6 overflow-x-auto no-scrollbar">
+            {[
+              { id: 'myday', label: 'Meu Dia' },
+              { id: 'clients', label: 'Clientes' },
+              { id: 'projects', label: 'Projetos' },
+              { id: 'calculator', label: 'Calculadora' },
+              { id: 'config', label: 'Config' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); if(tab.id === 'calculator') setEditingProject(null); }}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
+                  activeTab === tab.id 
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' 
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-        {activeTab === 'config' && (
-            <ConfigView />
-        )}
-      </div>
-
-      {/* STICKY BOTTOM BANNER FOR FREE USERS */}
-      {!user?.isPro && (
-        <div className="fixed bottom-0 left-0 w-full bg-gray-900 text-white p-4 z-40 border-t border-gray-800 animate-slide-up print:hidden">
-          <div className="max-w-4xl mx-auto flex justify-between items-center">
-            <div className="text-sm">
-              <span className="font-bold text-alert-orange">VERSÃO GRATUITA</span>
-              <p className="text-gray-400 text-xs hidden sm:block">Desbloqueie PDF e Histórico</p>
-            </div>
-            <button onClick={() => setShowProModal(true)} className="bg-alert-orange text-white font-bold py-2 px-6 rounded hover:bg-amber-600 transition shadow-lg text-sm">SEJA PRO R$ {PRICE_PRO}</button>
+          <div className="flex items-center gap-4">
+             <button onClick={toggleTheme} className="p-2 text-gray-400 hover:text-yellow-500 dark:text-gray-500 dark:hover:text-yellow-300 transition-colors">
+                {theme === 'light' ? <Icons.Moon /> : <Icons.Sun />}
+             </button>
+             {user?.isPro ? (
+               <span className="text-xs font-bold bg-alert-orange text-white px-2 py-1 rounded">PRO</span>
+             ) : (
+               <button onClick={() => setShowProModal(true)} className="text-sm font-bold text-alert-orange hover:underline">
+                 SEJA PRO
+               </button>
+             )}
           </div>
         </div>
-      )}
+      </nav>
 
-      {showProModal && <ProModal onClose={() => setShowProModal(false)} />}
+      {/* CONTENT */}
+      <main className="p-4 animate-fade-in">
+        {activeTab === 'myday' && <MyDayView user={user!} onShowPro={() => setShowProModal(true)} onNavigate={setActiveTab} />}
+        {activeTab === 'clients' && <ClientsView user={user!} onShowPro={() => setShowProModal(true)} />}
+        {activeTab === 'projects' && <ProjectsView user={user!} onEdit={(p) => { setEditingProject(p); setActiveTab('calculator'); }} />}
+        {activeTab === 'calculator' && (
+           <CalculatorApp 
+             user={user} 
+             onShowPro={() => setShowProModal(true)} 
+             onNavigate={setActiveTab} 
+             existingProject={editingProject}
+           />
+        )}
+        {activeTab === 'config' && <ConfigView user={user!} onUpdateUser={setUser} onLogout={handleLogout} />}
+      </main>
+
+      {/* STICKY FOOTER FOR FREE USERS */}
+      {!user?.isPro && (
+        <div className="fixed bottom-0 left-0 w-full bg-gray-900 dark:bg-black text-white p-3 flex justify-between items-center z-40 shadow-lg border-t border-gray-800">
+          <div className="text-sm px-2">
+            <span className="font-bold text-alert-orange">VERSÃO GRATUITA</span>
+            <span className="hidden sm:inline text-gray-400 ml-2">Desbloqueie PDF e Histórico</span>
+          </div>
+          <button 
+            onClick={handleUpgrade}
+            className="bg-alert-orange hover:bg-amber-600 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors"
+          >
+            SEJA PRO R$ {PRICE_PRO}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
