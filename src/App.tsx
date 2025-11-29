@@ -16,6 +16,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 // --- ICONS ---
 type IconProps = React.SVGProps<SVGSVGElement> & { size?: number | string };
 const Icons = {
+  Menu: ({ size = 24, ...props }: IconProps) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>,
   Lock: ({ size = 18, ...props }: IconProps) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
   Check: ({ size = 20, ...props }: IconProps) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="20 6 9 17 4 12"></polyline></svg>,
   User: ({ size = 20, ...props }: IconProps) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
@@ -52,8 +53,8 @@ const generateUUID = () => typeof crypto !== 'undefined' && crypto.randomUUID ? 
 
 const AppLogo = ({ className = "" }: { className?: string }) => (
   <div className={`flex items-center gap-3 ${className}`}>
-    <img src="/logo.png" alt="DRYFLOW" className="h-10 w-auto object-contain" onError={(e) => { e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
-    <span className="hidden text-xl font-extrabold text-obra-green tracking-tight">DRYFLOW</span>
+    <img src="/logo.png" alt="DRYFLOW" className="h-9 w-auto object-contain" onError={(e) => { e.currentTarget.style.display='none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
+    <span className="hidden text-xl font-bold text-gray-800 tracking-tight dark:text-white">DRYFLOW</span>
   </div>
 );
 
@@ -118,21 +119,25 @@ const ConfigView = ({ user, onUpdateUser, onShowPro }: { user: User, onUpdateUse
   const [showQR, setShowQR] = useState(false);
   const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); saveUser(formData); onUpdateUser(formData); alert('Dados salvos!'); };
   return (
-    <div className="p-8 animate-fade-in">
-      <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">Configurações</h1>
+    <div className="p-8 animate-fade-in max-w-3xl mx-auto">
+      <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Configurações</h1>
       {showQR && <DigitalCardModal user={user} onClose={() => setShowQR(false)} />}
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
-         <div>
-            <label className="text-xs font-bold text-slate-500 uppercase">Nome</label>
-            <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 mt-2 rounded-xl bg-slate-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-obra-green" />
-         </div>
-         <div className="grid grid-cols-2 gap-4">
-            <div><label className="text-xs font-bold text-slate-500 uppercase">Empresa</label><input value={formData.companyName||''} onChange={e => setFormData({...formData, companyName: e.target.value})} className="w-full p-4 mt-2 rounded-xl bg-slate-50 dark:bg-slate-800 border-none" /></div>
-            <div><label className="text-xs font-bold text-slate-500 uppercase">Cidade</label><input value={formData.city||''} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full p-4 mt-2 rounded-xl bg-slate-50 dark:bg-slate-800 border-none" /></div>
-         </div>
-         <button type="submit" className="bg-obra-green text-white font-bold py-3 px-6 rounded-xl">Salvar</button>
-         <button type="button" onClick={() => { if(user.isPro) setShowQR(true); else onShowPro(); }} className="ml-4 text-slate-500 font-bold hover:text-slate-900">Cartão Digital</button>
-      </form>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
+           <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Nome</label>
+              <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-transparent focus:bg-white focus:border-gray-200 focus:ring-2 focus:ring-blue-100 transition-all outline-none" />
+           </div>
+           <div className="grid grid-cols-2 gap-6">
+              <div><label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Empresa</label><input value={formData.companyName||''} onChange={e => setFormData({...formData, companyName: e.target.value})} className="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-transparent focus:bg-white focus:border-gray-200 focus:ring-2 focus:ring-blue-100 transition-all outline-none" /></div>
+              <div><label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Cidade</label><input value={formData.city||''} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-transparent focus:bg-white focus:border-gray-200 focus:ring-2 focus:ring-blue-100 transition-all outline-none" /></div>
+           </div>
+           <div className="flex gap-4 pt-4">
+              <button type="submit" className="bg-obra-green text-white font-bold py-3 px-8 rounded-lg shadow-sm hover:shadow-md transition-all">Salvar</button>
+              <button type="button" onClick={() => { if(user.isPro) setShowQR(true); else onShowPro(); }} className="text-gray-600 dark:text-gray-300 font-bold hover:text-gray-900 px-4">Cartão Digital</button>
+           </div>
+        </form>
+      </div>
     </div>
   );
 };
@@ -146,32 +151,70 @@ const CalculatorApp = ({ user, onShowPro, onNavigate, existingProject }: any) =>
   const handleSave = () => { if (!user?.isPro) { onShowPro(); return; } saveSingleProject(user.id, { id: existingProject?.id || generateUUID(), clientId: '', clientName: clientName || 'Novo Cliente', title: title || 'Novo Orçamento', date: new Date().toISOString(), status, environments: envs, totalMaterials: 0, totalLabor: 0, grandTotal: 0 }); alert('Salvo!'); onNavigate('dashboard'); };
 
   return (
-    <div className="absolute inset-0 bg-white dark:bg-slate-900 z-50 overflow-y-auto p-6 animate-fade-in">
-        <div className="max-w-5xl mx-auto">
+    <div className="absolute inset-0 bg-[#faf9f8] dark:bg-slate-900 z-50 overflow-y-auto animate-fade-in">
+        <div className="max-w-4xl mx-auto p-8">
             <div className="flex items-center gap-4 mb-8">
-                <button onClick={() => onNavigate('dashboard')} className="p-2 bg-slate-100 rounded-full"><Icons.ArrowLeft /></button>
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Calculadora</h1>
+                <button onClick={() => onNavigate('dashboard')} className="p-2 hover:bg-white rounded-full transition-colors text-gray-500"><Icons.ArrowLeft /></button>
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Calculadora</h1>
             </div>
-            <div className="grid gap-6">
-                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 dark:bg-slate-800 dark:border-slate-700">
-                    <div className="flex gap-4 mb-4">
-                        <input value={clientName} onChange={e=>setClientName(e.target.value)} placeholder="Cliente" className="flex-1 p-3 rounded-xl border-none" />
-                        <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Título" className="flex-1 p-3 rounded-xl border-none" />
+            
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Cliente</label>
+                        <input value={clientName} onChange={e=>setClientName(e.target.value)} className="w-full text-lg font-medium border-b border-gray-200 focus:border-obra-green outline-none pb-2 bg-transparent text-gray-800 dark:text-white placeholder-gray-300" placeholder="Nome do Cliente" />
                     </div>
-                    {envs.map((env, i) => (
-                        <div key={env.id} className="bg-white p-4 rounded-xl mb-4 shadow-sm border border-slate-100 dark:bg-slate-700 dark:border-slate-600">
-                            <div className="flex justify-between font-bold mb-2"><span>{env.name}</span><span>{(env.width*env.height).toFixed(2)}m²</span></div>
-                            <div className="flex gap-2 text-sm text-slate-500">
-                                <label><input type="checkbox" checked={env.hasDrywall} onChange={()=>{}} /> Drywall</label>
-                                <label><input type="checkbox" checked={env.hasPainting} onChange={()=>{}} /> Pintura</label>
+                    <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase mb-2 block">Projeto</label>
+                        <input value={title} onChange={e=>setTitle(e.target.value)} className="w-full text-lg font-medium border-b border-gray-200 focus:border-obra-green outline-none pb-2 bg-transparent text-gray-800 dark:text-white placeholder-gray-300" placeholder="Nome do Projeto" />
+                    </div>
+                 </div>
+            </div>
+
+            <div className="space-y-6">
+                {envs.map((env, i) => (
+                    <div key={env.id} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative group">
+                        <button onClick={() => { if(envs.length>1) setEnvs(envs.filter(e=>e.id!==env.id)) }} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Icons.Trash /></button>
+                        <div className="flex items-end gap-4 mb-6">
+                            <div className="flex-1">
+                                <label className="text-xs font-bold text-gray-400 uppercase mb-1 block">Ambiente {i+1}</label>
+                                <input value={env.name} onChange={e=>setEnvs(envs.map(ev=>ev.id===env.id?{...ev,name:e.target.value}:ev))} className="text-xl font-bold bg-transparent outline-none text-gray-800 dark:text-white w-full" />
+                            </div>
+                            <div className="flex gap-2 items-end bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
+                                <input type="number" value={env.width} onChange={e=>setEnvs(envs.map(ev=>ev.id===env.id?{...ev,width:parseFloat(e.target.value)||0}:ev))} className="w-16 bg-transparent text-center font-bold outline-none border-b border-gray-300 focus:border-blue-500" />
+                                <span className="text-gray-400 text-sm">x</span>
+                                <input type="number" value={env.height} onChange={e=>setEnvs(envs.map(ev=>ev.id===env.id?{...ev,height:parseFloat(e.target.value)||0}:ev))} className="w-16 bg-transparent text-center font-bold outline-none border-b border-gray-300 focus:border-blue-500" />
+                                <span className="text-gray-400 text-xs ml-1">m</span>
                             </div>
                         </div>
-                    ))}
-                    <button onClick={()=>setEnvs([...envs, {id:generateUUID(), name:`Ambiente ${envs.length+1}`, width:4, height:2.7, hasDrywall:true, hasPainting:false, hasElectrical:false, drywallSubType:'parede', drywallLaborPrice:0, paintingLaborPrice:0, electricalLaborPrice:0, materials:[]}])} className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl font-bold text-slate-400">Adicionar Ambiente</button>
-                </div>
+
+                        <div className="flex gap-4 border-b border-gray-100 dark:border-gray-700 pb-4 mb-4">
+                            {[
+                                {id:'hasDrywall', l:'Drywall', c:'bg-blue-50 text-blue-600', cd:'dark:bg-blue-900/30 dark:text-blue-400'}, 
+                                {id:'hasPainting', l:'Pintura', c:'bg-amber-50 text-amber-600', cd:'dark:bg-amber-900/30 dark:text-amber-400'},
+                                {id:'hasElectrical', l:'Elétrica', c:'bg-yellow-50 text-yellow-600', cd:'dark:bg-yellow-900/30 dark:text-yellow-400'}
+                            ].map(opt => (
+                                <label key={opt.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-full cursor-pointer transition-all border ${ (env as any)[opt.id] ? opt.c + ' border-transparent ' + opt.cd : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-600' }`}>
+                                    <input type="checkbox" checked={(env as any)[opt.id]} onChange={e=>setEnvs(envs.map(ev=>ev.id===env.id?{...ev,[opt.id]:e.target.checked}:ev))} className="hidden" />
+                                    <span className="text-sm font-bold">{opt.l}</span>
+                                </label>
+                            ))}
+                        </div>
+                        
+                        {/* Simplified Logic Display for Demo */}
+                        {(env.hasDrywall || env.hasPainting || env.hasElectrical) && (
+                            <div className="text-sm text-gray-500 italic">Itens e cálculos serão gerados automaticamente no resumo.</div>
+                        )}
+                    </div>
+                ))}
+                
+                <button onClick={()=>setEnvs([...envs, {id:generateUUID(), name:`Ambiente ${envs.length+1}`, width:4, height:2.7, hasDrywall:true, hasPainting:false, hasElectrical:false, drywallSubType:'parede', drywallLaborPrice:0, paintingLaborPrice:0, electricalLaborPrice:0, materials:[]}])} className="w-full py-4 border border-dashed border-gray-300 rounded-xl text-gray-500 hover:bg-white hover:border-obra-green hover:text-obra-green transition-all font-medium flex items-center justify-center gap-2">
+                   <Icons.Plus size={18} /> Adicionar Ambiente
+                </button>
             </div>
-            <div className="fixed bottom-0 left-0 w-full bg-white p-4 border-t border-slate-200 flex justify-end gap-4">
-                <button onClick={handleSave} className="bg-obra-green text-white font-bold py-3 px-8 rounded-xl">Salvar Projeto</button>
+            <div className="h-24"></div> 
+            <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end gap-4 z-40 shadow-lg">
+                <button onClick={handleSave} className="bg-obra-green hover:bg-obra-dark text-white font-bold py-3 px-8 rounded-lg shadow-md transition-all">Salvar Projeto</button>
             </div>
         </div>
     </div>
@@ -180,16 +223,23 @@ const CalculatorApp = ({ user, onShowPro, onNavigate, existingProject }: any) =>
 
 
 // --- SIDEBAR (Fixed Nav) ---
-const Sidebar = ({ activeTab, setActiveTab, user, theme, setTheme }: any) => (
-  <div className="w-[280px] bg-[#f3f4f6] dark:bg-[#202020] border-r border-slate-200 dark:border-black/20 flex flex-col hidden md:flex flex-shrink-0 h-full">
-     <div className="p-5">
-        <AppLogo className="mb-6" />
-        <div className="flex items-center gap-3 mb-6 p-2 rounded-lg hover:bg-white/50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-           <div className="w-8 h-8 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-xs">{user?.name.charAt(0)}</div>
-           <div className="overflow-hidden"><p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{user?.name}</p></div>
+const Sidebar = ({ activeTab, setActiveTab, user, theme, setTheme, mobileMenuOpen, setMobileMenuOpen }: any) => (
+  <>
+  {/* Mobile Overlay */}
+  {mobileMenuOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setMobileMenuOpen(false)}></div>}
+  
+  <div className={`fixed inset-y-0 left-0 w-72 bg-[#f3f2f1] dark:bg-[#1f1f1f] border-r border-gray-200 dark:border-black/20 flex flex-col z-40 transition-transform duration-300 md:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:static`}>
+     <div className="p-6">
+        <AppLogo className="mb-8" />
+        <div className="flex items-center gap-3 mb-8">
+           <div className="w-10 h-10 rounded-full bg-white dark:bg-gray-700 text-gray-600 dark:text-white flex items-center justify-center font-bold shadow-sm">{user?.name.charAt(0)}</div>
+           <div className="overflow-hidden">
+               <p className="font-bold text-sm text-gray-800 dark:text-white truncate">{user?.name}</p>
+               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+           </div>
         </div>
      </div>
-     <div className="flex-1 px-2 space-y-0.5 overflow-y-auto">
+     <div className="flex-1 px-3 space-y-1 overflow-y-auto">
         {[
           {id:'dashboard', l:'Painel Central', i:Icons.Home},
           {id:'myday', l:'Tarefas do Dia', i:Icons.Sun},
@@ -197,20 +247,21 @@ const Sidebar = ({ activeTab, setActiveTab, user, theme, setTheme }: any) => (
           {id:'budgets', l:'Orçamentos', i:Icons.FileText},
           {id:'config', l:'Configurações', i:Icons.Settings},
         ].map(item => (
-           <button key={item.id} onClick={()=>setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm font-medium transition-colors ${activeTab===item.id ? 'bg-white dark:bg-[#2b2b2b] text-slate-900 dark:text-white font-bold shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/5'}`}>
-              <item.i size={18} className={activeTab===item.id ? 'text-obra-green' : 'text-slate-400'} /> {item.l}
+           <button key={item.id} onClick={()=>{setActiveTab(item.id); setMobileMenuOpen(false);}} className={`w-full flex items-center gap-4 px-4 py-3 rounded-md text-sm font-medium transition-all ${activeTab===item.id ? 'bg-white dark:bg-[#2b2b2b] text-gray-900 dark:text-white font-bold shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-white/5'}`}>
+              <item.i size={20} className={activeTab===item.id ? 'text-obra-green' : 'text-gray-400'} /> {item.l}
            </button>
         ))}
      </div>
-     <div className="p-4 border-t border-slate-200 dark:border-black/20">
-        <button onClick={()=>setTheme(t=>t==='light'?'dark':'light')} className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700">
-           {theme==='light' ? <Icons.Moon size={14}/> : <Icons.Sun size={14}/>} {theme==='light' ? 'Modo Escuro' : 'Modo Claro'}
+     <div className="p-6">
+        <button onClick={()=>setTheme(t=>t==='light'?'dark':'light')} className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors">
+           {theme==='light' ? <Icons.Moon size={16}/> : <Icons.Sun size={16}/>} {theme==='light' ? 'Modo Escuro' : 'Modo Claro'}
         </button>
      </div>
   </div>
+  </>
 );
 
-// --- NEW DASHBOARD LAYOUT (2x2 GRID) ---
+// --- DASHBOARD LAYOUT (2x2 GRID -> 3 Columns in code below per request, but visually tiles) ---
 const DashboardListView = ({ projects, user, onNavigate, onSelectItem }: any) => {
   const activeProjects = projects.filter((p: Project) => p.status === 'em_execucao' || p.status === 'aceito');
   const pendingBudgets = projects.filter((p: Project) => p.status === 'aguardando_aceite');
@@ -218,95 +269,93 @@ const DashboardListView = ({ projects, user, onNavigate, onSelectItem }: any) =>
   
   return (
     <div className="p-8 max-w-6xl mx-auto animate-fade-in">
-       {/* Header */}
        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-1">Painel Central</h1>
-          <p className="text-slate-500">Olá, {user.name.split(' ')[0]}. Resumo da sua operação hoje.</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-1">Painel Central</h1>
+          <p className="text-gray-500">Resumo da sua operação hoje.</p>
        </div>
 
-       {/* 2x2 GRID */}
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+       {/* Grid Layout: Using clean white tiles with soft shadows */}
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
-          {/* Card 1: Projetos Ativos */}
-          <div className="bg-white dark:bg-[#2b2b2b] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden group">
-             <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center mb-4"><Icons.Briefcase size={24}/></div>
-             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide">Projetos Ativos</h3>
-             <div className="mt-2 text-4xl font-extrabold text-slate-900 dark:text-white">{activeProjects.length}</div>
-             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                <button onClick={()=>onNavigate('projects')} className="text-sm font-bold text-blue-600 hover:underline">Ver projetos &rarr;</button>
-             </div>
+          <div className="bg-white dark:bg-[#2b2b2b] p-6 rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow cursor-pointer border-t-4 border-blue-500" onClick={()=>onNavigate('projects')}>
+             <div className="flex justify-between items-center mb-4"><h3 className="text-sm font-bold text-gray-500 uppercase">Projetos Ativos</h3><Icons.Briefcase className="text-blue-500" /></div>
+             <div className="text-4xl font-bold text-gray-800 dark:text-white mb-2">{activeProjects.length}</div>
+             <span className="text-xs font-bold text-blue-600">Ver todos &rarr;</span>
           </div>
 
-          {/* Card 2: Orçamentos Pendentes */}
-          <div className="bg-white dark:bg-[#2b2b2b] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-             <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center mb-4"><Icons.FileText size={24}/></div>
-             <div className="flex justify-between items-start">
-                 <div>
-                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide">Orçamentos Pendentes</h3>
-                    <div className="mt-2 text-4xl font-extrabold text-slate-900 dark:text-white">{pendingBudgets.length}</div>
-                 </div>
-                 <div className="text-right space-y-2 mt-1">
-                     {pendingBudgets.slice(0,3).map((p: Project) => (
-                         <div key={p.id} className="text-xs text-slate-500">{p.clientName} <span className="text-slate-300">•</span> {new Date(p.date).toLocaleDateString().slice(0,5)}</div>
-                     ))}
-                 </div>
-             </div>
-             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                <button onClick={()=>onNavigate('budgets')} className="text-sm font-bold text-amber-600 hover:underline">Ver orçamentos &rarr;</button>
-             </div>
+          <div className="bg-white dark:bg-[#2b2b2b] p-6 rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow cursor-pointer border-t-4 border-amber-500" onClick={()=>onNavigate('budgets')}>
+             <div className="flex justify-between items-center mb-4"><h3 className="text-sm font-bold text-gray-500 uppercase">Orçamentos</h3><Icons.FileText className="text-amber-500" /></div>
+             <div className="text-4xl font-bold text-gray-800 dark:text-white mb-2">{pendingBudgets.length}</div>
+             <span className="text-xs font-bold text-amber-600">Ver pendentes &rarr;</span>
           </div>
 
-          {/* Card 3: Meu Dia (Tarefas) */}
-          <div className="bg-white dark:bg-[#2b2b2b] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-             <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-600 flex items-center justify-center mb-4"><Icons.Clock size={24}/></div>
-             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide">Tarefas de Hoje</h3>
-             <div className="mt-2 text-4xl font-extrabold text-slate-900 dark:text-white">{todayTasks.length}</div>
-             <p className="text-sm text-slate-400 mt-1">Itens agendados nos checklists.</p>
-             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
-                <button onClick={()=>onNavigate('myday')} className="text-sm font-bold text-purple-600 hover:underline">Ver lista de tarefas &rarr;</button>
-             </div>
+          <div className="bg-white dark:bg-[#2b2b2b] p-6 rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow cursor-pointer border-t-4 border-purple-500" onClick={()=>onNavigate('myday')}>
+             <div className="flex justify-between items-center mb-4"><h3 className="text-sm font-bold text-gray-500 uppercase">Tarefas Hoje</h3><Icons.Clock className="text-purple-500" /></div>
+             <div className="text-4xl font-bold text-gray-800 dark:text-white mb-2">{todayTasks.length}</div>
+             <span className="text-xs font-bold text-purple-600">Ver lista &rarr;</span>
           </div>
 
-          {/* Card 4: Atalhos Rápidos */}
-          <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-inner flex flex-col justify-center">
-             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4">Acesso Rápido</h3>
-             <div className="grid grid-cols-2 gap-3">
-                <button onClick={()=>onNavigate('calculator')} className="bg-white dark:bg-[#2b2b2b] hover:bg-green-50 dark:hover:bg-green-900/20 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-center transition-colors shadow-sm">
-                   <div className="text-obra-green font-bold text-sm">Nova Cotação</div>
-                </button>
-                <button onClick={()=>onNavigate('projects')} className="bg-white dark:bg-[#2b2b2b] hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-center transition-colors shadow-sm">
-                   <div className="text-blue-600 font-bold text-sm">Novo Projeto</div>
-                </button>
-                <button onClick={()=>onNavigate('config')} className="bg-white dark:bg-[#2b2b2b] hover:bg-slate-100 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-center transition-colors shadow-sm">
-                   <div className="text-slate-600 dark:text-slate-300 font-bold text-sm">Configurações</div>
-                </button>
-                <button className="bg-white dark:bg-[#2b2b2b] hover:bg-slate-100 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-center transition-colors shadow-sm cursor-not-allowed opacity-60">
-                   <div className="text-slate-400 font-bold text-sm">Clientes</div>
-                </button>
-             </div>
-          </div>
-
+       </div>
+       
+       <div className="mt-8">
+           <h3 className="text-sm font-bold text-gray-500 uppercase mb-4">Acesso Rápido</h3>
+           <div className="flex gap-4 overflow-x-auto pb-4">
+              <button onClick={()=>onNavigate('calculator')} className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-green-50 dark:hover:bg-green-900/20 text-sm font-bold text-gray-700 dark:text-white whitespace-nowrap"><Icons.Plus size={16} className="text-obra-green"/> Nova Cotação</button>
+              <button onClick={()=>onNavigate('config')} className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-bold text-gray-700 dark:text-white whitespace-nowrap"><Icons.Settings size={16} /> Configurações</button>
+           </div>
        </div>
     </div>
   );
 };
 
-// ... (MyDayListView, ProjectListView, DetailsPanel remain the same structure logic but used via nav) ...
-// Re-declaring minimal versions to ensure compilation if not replaced above, but intent is replacement.
 const MyDayListView = ({ tasks, onSelectItem }: any) => (
-    <div className="p-8 max-w-4xl mx-auto space-y-4">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Tarefas do Dia</h1>
-        {tasks.map((t:any,i:number)=>(<div key={i} onClick={()=>onSelectItem(t,'task')} className="p-4 bg-white dark:bg-[#2b2b2b] rounded shadow-sm border border-slate-100 cursor-pointer">{t.t.text}</div>))}
+    <div className="p-8 max-w-4xl mx-auto space-y-2">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Tarefas do Dia</h1>
+        {tasks.length === 0 && <p className="text-gray-400 italic">Nenhuma tarefa para hoje.</p>}
+        {tasks.map((t:any,i:number)=>(
+            <div key={i} onClick={()=>onSelectItem(t,'task')} className="group flex items-center gap-4 p-4 bg-white dark:bg-[#2b2b2b] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-md transition-all cursor-pointer border-l-4 border-transparent hover:border-purple-500">
+                <div className="w-5 h-5 rounded-full border-2 border-gray-300 group-hover:border-purple-500"></div>
+                <div className="flex-1">
+                    <p className="text-gray-800 dark:text-white font-medium">{t.t.text}</p>
+                    <p className="text-xs text-gray-400">{t.pTitle}</p>
+                </div>
+            </div>
+        ))}
     </div>
 );
+
 const ProjectListView = ({ projects, onSelectItem }: any) => (
-    <div className="p-8 max-w-4xl mx-auto space-y-4">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Projetos</h1>
-        {projects.map((p:Project)=>(<div key={p.id} onClick={()=>onSelectItem(p,'project')} className="p-4 bg-white dark:bg-[#2b2b2b] rounded shadow-sm border border-slate-100 cursor-pointer">{p.title}</div>))}
+    <div className="p-8 max-w-4xl mx-auto space-y-2">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Projetos</h1>
+        {projects.map((p:Project)=>(
+            <div key={p.id} onClick={()=>onSelectItem(p,'project')} className="group flex items-center gap-4 p-4 bg-white dark:bg-[#2b2b2b] rounded-lg shadow-[0_1px_2px_rgba(0,0,0,0.05)] hover:shadow-md transition-all cursor-pointer border-l-4 border-transparent hover:border-blue-500">
+                <Icons.Briefcase className="text-gray-400 group-hover:text-blue-500" />
+                <div className="flex-1">
+                    <p className="text-gray-800 dark:text-white font-medium">{p.title}</p>
+                    <p className="text-xs text-gray-400">{p.clientName} • {p.status}</p>
+                </div>
+            </div>
+        ))}
     </div>
 );
+
 const DetailsPanel = ({ selectedItem, type, onClose }: any) => (
-    <div className="h-full bg-white dark:bg-[#202020] p-6 border-l border-slate-100"><button onClick={onClose}><Icons.X/></button><h2 className="text-xl font-bold mt-4">{type==='project'?selectedItem.title:selectedItem.t.text}</h2></div>
+    <div className="h-full bg-white dark:bg-[#202020] p-8 border-l border-gray-100 dark:border-black/20 shadow-xl z-20 overflow-y-auto">
+        <div className="flex justify-between items-start mb-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">{type==='project'?selectedItem.title:selectedItem.t.text}</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><Icons.X /></button>
+        </div>
+        <div className="space-y-4">
+            {type==='project' ? (
+                <>
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"><span className="text-xs font-bold text-gray-500 uppercase">Cliente</span><p>{selectedItem.clientName}</p></div>
+                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"><span className="text-xs font-bold text-gray-500 uppercase">Status</span><p>{selectedItem.status}</p></div>
+                </>
+            ) : (
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"><span className="text-xs font-bold text-gray-500 uppercase">Projeto</span><p>{selectedItem.pTitle}</p></div>
+            )}
+        </div>
+    </div>
 );
 
 // --- APP SHELL ---
@@ -319,6 +368,7 @@ export default function App() {
   const [showProModal, setShowProModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [theme, setTheme] = useState<'light'|'dark'>('light');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const u = getCurrentUser(); 
@@ -335,31 +385,43 @@ export default function App() {
 
   if (activeTab === 'landing') {
       return (
-          <div className="min-h-screen bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-6 text-center">
+          <div className="min-h-screen bg-[#faf9f8] dark:bg-slate-900 flex flex-col items-center justify-center p-6 text-center">
               {showLoginModal && <LoginModal onClose={handleLogin} />}
               <AppLogo className="text-4xl mb-8" />
-              <h1 className="text-5xl font-extrabold text-slate-900 dark:text-white mb-6">Obras sem mistério.</h1>
-              <button onClick={handleStart} className="px-10 py-4 bg-slate-900 text-white font-bold rounded-2xl text-xl hover:scale-105 transition-transform">Entrar</button>
+              <h1 className="text-5xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">Obras sem mistério.</h1>
+              <p className="text-xl text-gray-500 mb-10 max-w-md mx-auto">A ferramenta definitiva para gesseiros e pintores organizarem seus projetos.</p>
+              <button onClick={handleStart} className="px-10 py-4 bg-obra-green text-white font-bold rounded-full text-xl hover:shadow-lg hover:bg-obra-dark transition-all transform hover:-translate-y-1">Entrar</button>
           </div>
       );
   }
 
   return (
-    <div className="flex h-screen bg-white dark:bg-[#202020] overflow-hidden font-sans text-slate-900 dark:text-white">
+    <div className="flex h-screen bg-[#faf9f8] dark:bg-[#202020] overflow-hidden font-sans text-gray-900 dark:text-white">
        {showProModal && <ProModal onClose={()=>setShowProModal(false)} />}
-       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} theme={theme} setTheme={setTheme} />
-       <div className={`flex-1 flex flex-col min-w-0 bg-white dark:bg-[#252525] border-r border-slate-200 dark:border-black/20 relative z-0`}>
-          <div className="flex-1 overflow-y-auto scroll-smooth">
+       
+       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} theme={theme} setTheme={setTheme} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+       
+       <div className={`flex-1 flex flex-col min-w-0 bg-[#faf9f8] dark:bg-[#252525] relative z-0`}>
+          {/* Mobile Header */}
+          <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-[#202020] border-b border-gray-200 dark:border-black/20">
+             <button onClick={()=>setMobileMenuOpen(true)}><Icons.Menu /></button>
+             <span className="font-bold text-obra-green">DRYFLOW</span>
+             <div className="w-6"></div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto scroll-smooth relative">
               {activeTab === 'dashboard' && <DashboardListView projects={projects} user={user} onNavigate={setActiveTab} onSelectItem={handleSelectItem} />}
               {activeTab === 'myday' && <MyDayListView tasks={projects.flatMap(p=>(p.tasks||[]).filter(t=>t.date===new Date().toISOString().split('T')[0]).map(t=>({t,pid:p.id,pTitle:p.title})))} onSelectItem={handleSelectItem} />}
               {activeTab === 'projects' && <ProjectListView projects={projects} onSelectItem={handleSelectItem} />}
               {activeTab === 'budgets' && <ProjectListView projects={projects.filter(p=>p.status==='rascunho' || p.status==='aguardando_aceite')} onSelectItem={handleSelectItem} />}
               {activeTab === 'config' && <ConfigView user={user!} onUpdateUser={setUser} onShowPro={()=>setShowProModal(true)} />}
+              {activeTab === 'calculator' && <CalculatorApp user={user} onShowPro={()=>setShowProModal(true)} onNavigate={setActiveTab} existingProject={editingProject} />}
           </div>
-          {activeTab === 'calculator' && <CalculatorApp user={user} onShowPro={()=>setShowProModal(true)} onNavigate={setActiveTab} existingProject={editingProject} />}
        </div>
+       
+       {/* Right Panel (Desktop) */}
        {activeTab !== 'calculator' && activeTab !== 'config' && selectedItem && (
-           <div className={`w-[360px] flex-shrink-0 bg-white dark:bg-[#202020] hidden xl:flex flex-col border-l border-slate-100 dark:border-black/20 z-10`}>
+           <div className={`w-[360px] flex-shrink-0 bg-white dark:bg-[#202020] hidden xl:flex flex-col border-l border-gray-100 dark:border-black/20 z-10 shadow-[-4px_0_15px_rgba(0,0,0,0.02)]`}>
                <DetailsPanel selectedItem={selectedItem} type={selectedItemType} onClose={()=>setSelectedItem(null)} />
            </div>
        )}
