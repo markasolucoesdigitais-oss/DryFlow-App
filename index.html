@@ -11,27 +11,49 @@
         theme: {
           extend: {
             colors: {
+              // Using Slate for a richer, more premium grey
+              gray: {
+                50: '#f8fafc',
+                100: '#f1f5f9',
+                200: '#e2e8f0',
+                300: '#cbd5e1',
+                400: '#94a3b8',
+                500: '#64748b',
+                600: '#475569',
+                700: '#334155',
+                800: '#1e293b',
+                900: '#0f172a',
+              },
               obra: {
                 green: '#10B981', // Emerald 500
-                dark: '#064E3B',  // Emerald 900
-                light: '#D1FAE5', // Emerald 100
+                dark: '#047857',  // Emerald 700
+                light: '#ECFDF5', // Emerald 50
               },
               alert: {
                 orange: '#F59E0B', // Amber 500
               }
             },
             fontFamily: {
-              sans: ['Inter', 'system-ui', 'sans-serif'],
+              sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            },
+            boxShadow: {
+              'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+              'glow': '0 0 15px rgba(16, 185, 129, 0.3)',
             }
           }
         }
       };
     </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+      /* Import Inter with weights 400 (Regular), 500 (Medium), 600 (SemiBold), 700 (Bold) to fix "faint" look */
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      
       body {
         font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
+      
       /* Hide scrollbar for clean UI */
       .no-scrollbar::-webkit-scrollbar {
         display: none;
@@ -40,9 +62,21 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
+      
+      /* Smooth transitions */
+      .animate-fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
       @media print {
         .no-print { display: none !important; }
         .print-only { display: block !important; }
+        body { background: white; color: black; }
+        .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
       }
     </style>
   <script type="importmap">
@@ -59,7 +93,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
+  <body class="bg-gray-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-200">
     <div id="root"></div>
   </body>
 </html>

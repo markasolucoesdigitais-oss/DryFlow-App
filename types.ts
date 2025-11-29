@@ -1,14 +1,13 @@
 
 export interface User {
-  id: string; // Unique identifier (UUID or Google ID)
+  id: string;
   name: string;
   email: string;
   isPro: boolean;
   companyName?: string;
-  document?: string; // CPF or CNPJ
+  document?: string;
   phone?: string;
   city?: string;
-  photoUrl?: string; // For Google Auth display
 }
 
 export interface Client {
@@ -20,48 +19,67 @@ export interface Client {
   notes?: string;
 }
 
-export type ServiceType = 'drywall' | 'painting' | 'electrical';
-export type SubType = 'parede' | 'teto' | 'textura' | 'lisa' | 'pontos' | 'fiacao';
+export type ServiceCategory = 'drywall' | 'painting' | 'electrical';
 
 export interface MaterialItem {
+  id: string;
+  category: ServiceCategory;
   name: string;
   quantity: number;
   unit: string;
+  isAutoCalculated?: boolean; // To distinguish base materials from extras
 }
 
-export interface ExtraItem {
+export interface Environment {
   id: string;
-  description: string;
-  quantity?: number;
+  name: string; // e.g., "Sala", "Cozinha"
+  width: number;
+  height: number;
+  
+  // Service Toggles
+  hasDrywall: boolean;
+  hasPainting: boolean;
+  hasElectrical: boolean;
+
+  // Drywall Specifics
+  drywallSubType?: 'parede' | 'teto' | 'recorte';
+  drywallLaborPrice: number; // Total or Unit price, handled in logic
+
+  // Painting Specifics
+  paintingLaborPrice: number;
+
+  // Electrical Specifics
+  electricalLaborPrice: number;
+
+  // Materials for this environment
+  materials: MaterialItem[];
 }
 
-export interface CalculationResult {
-  area: number;
-  materials: MaterialItem[];
-  laborUnitDisplay: string; 
+export interface Task {
+  id: string;
+  text: string;
+  category: string;
+  date: string; // ISO date string YYYY-MM-DD
+  done: boolean;
 }
 
 export interface Project {
   id: string;
-  clientId?: string; // Link to client
-  clientName: string; // Fallback or display name
+  clientId?: string;
+  clientName: string;
   title: string;
+  address?: string; // New field for execution address
   date: string;
-  status: 'em_cotacao' | 'enviado' | 'aprovado' | 'finalizado';
+  status: 'rascunho' | 'aguardando_aceite' | 'aceito' | 'em_execucao' | 'concluido';
   
-  serviceType: ServiceType;
-  subType: SubType;
-  width: number;
-  height: number;
+  environments: Environment[];
+  tasks?: Task[];
   
-  extraItems: ExtraItem[]; 
-  observations?: string; 
-  
-  result: CalculationResult;
-  aiAdvice?: string;
-}
+  // Global Totals (Snapshots)
+  totalMaterials: number; // Only quantitative in Free, but we store structure
+  totalLabor: number;
+  grandTotal: number;
 
-export interface ProFeatureProps {
-  isPro: boolean;
-  onUpgrade: () => void;
+  observations?: string; 
+  startDate?: string; // For accepted projects
 }
