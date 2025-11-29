@@ -82,4 +82,7 @@ export interface Project {
 
   observations?: string; 
   startDate?: string; // For accepted projects
+  
+  validityDays?: number;
+  executionDays?: number;
 }
